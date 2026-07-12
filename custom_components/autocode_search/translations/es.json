@@ -1,0 +1,13 @@
+{
+  "config": {
+    "abort": {
+      "single_instance_allowed": "Solo se permite una entrada de Autocode Search."
+    },
+    "step": {
+      "user": {
+        "description": "Configura Autocode Search. La búsqueda de códigos IR estará disponible en una versión futura."
+      }
+    }
+  }
+}
+

@@ -1,0 +1,13 @@
+{
+  "domain": "autocode_search",
+  "name": "Autocode Search",
+  "codeowners": ["@rogerpaternina"],
+  "config_flow": true,
+  "documentation": "https://github.com/rogerpaternina/ha-autocode-search",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/rogerpaternina/ha-autocode-search/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}
