@@ -1,27 +1,13 @@
-"""Broadlink implementation of the infrared adapter interface."""
+"""Backward-compatible alias for the Home Assistant remote adapter."""
 
 from __future__ import annotations
 
-from typing import Any
-
-from .base import IRAdapter
+from .home_assistant_remote import HomeAssistantRemoteAdapter
 
 
-class BroadlinkAdapter(IRAdapter):
-    """Provide a future adapter for Broadlink infrared devices."""
+class BroadlinkAdapter(HomeAssistantRemoteAdapter):
+    """Deprecated compatibility name for ``HomeAssistantRemoteAdapter``.
 
-    async def send_code(self, code: str) -> None:
-        """Send an infrared code through a Broadlink device."""
-        # TODO: Add the Broadlink client and transmit the supplied code.
-        raise NotImplementedError("Broadlink support has not been implemented")
-
-    async def is_available(self) -> bool:
-        """Return whether the configured Broadlink device is available."""
-        # TODO: Add Broadlink reachability and authentication checks.
-        raise NotImplementedError("Broadlink support has not been implemented")
-
-    async def get_device_info(self) -> dict[str, Any]:
-        """Return non-sensitive information about the Broadlink device."""
-        # TODO: Return device information supplied by the Broadlink client.
-        raise NotImplementedError("Broadlink support has not been implemented")
-
+    Use ``HomeAssistantRemoteAdapter`` for any Home Assistant remote entity,
+    including entities backed by Broadlink hardware.
+    """
