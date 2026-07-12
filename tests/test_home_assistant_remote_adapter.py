@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from custom_components.autocode_search.adapters.home_assistant_remote import (
     HomeAssistantRemoteAdapter,
@@ -31,6 +31,44 @@ def test_send_code_calls_remote_send_command() -> None:
         {
             "entity_id": "remote.living_room",
             "command": "JgBQAAAB",
+        },
+        blocking=True,
+    )
+
+
+def test_broadlink_packet_is_sent_with_base64_prefix() -> None:
+    """A native Broadlink packet is sent with Home Assistant's b64 prefix."""
+    hass = _create_hass(MagicMock())
+    adapter = HomeAssistantRemoteAdapter(hass, "remote.living_room")
+
+    with patch.object(adapter, "_is_broadlink_remote", return_value=True):
+        asyncio.run(adapter.send_code("JgBQAAAB"))
+
+    hass.services.async_call.assert_awaited_once_with(
+        "remote",
+        "send_command",
+        {
+            "entity_id": "remote.living_room",
+            "command": "b64:JgBQAAAB",
+        },
+        blocking=True,
+    )
+
+
+def test_broadlink_named_command_uses_generic_strategy() -> None:
+    """A learned command name remains unchanged for backward compatibility."""
+    hass = _create_hass(MagicMock())
+    adapter = HomeAssistantRemoteAdapter(hass, "remote.living_room")
+
+    with patch.object(adapter, "_is_broadlink_remote", return_value=True):
+        asyncio.run(adapter.send_code("power"))
+
+    hass.services.async_call.assert_awaited_once_with(
+        "remote",
+        "send_command",
+        {
+            "entity_id": "remote.living_room",
+            "command": "power",
         },
         blocking=True,
     )
