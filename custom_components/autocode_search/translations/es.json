@@ -1,13 +1,28 @@
 {
+  "title": "AutoCode Search",
   "config": {
-    "abort": {
-      "single_instance_allowed": "Solo se permite una entrada de Autocode Search."
-    },
+    "abort": {"already_configured": "Este control remoto ya está configurado.", "no_remote_entities": "No se encontraron entidades remote. Configura primero una integración compatible, como Broadlink o ESPHome, y vuelve a intentarlo.", "single_instance_allowed": "Solo se permite una entrada de AutoCode Search."},
+    "error": {"invalid_brand": "Selecciona una marca válida.", "invalid_device_type": "Selecciona un tipo de dispositivo válido.", "invalid_provider": "Selecciona un proveedor de códigos válido.", "invalid_remote": "Selecciona una entidad existente del dominio remote."},
     "step": {
-      "user": {
-        "description": "Configura Autocode Search. La búsqueda de códigos IR estará disponible en una versión futura."
-      }
+      "user": {"title": "Seleccionar control remoto", "description": "Elige la entidad remote de Home Assistant que enviará los códigos infrarrojos.", "data": {"entity_id": "Control remoto"}},
+      "device_type": {"title": "Tipo de dispositivo", "description": "Elige el tipo de dispositivo que deseas buscar.", "data": {"device_type": "Tipo de dispositivo"}},
+      "brand": {"title": "Marca", "description": "Elige la marca del dispositivo.", "data": {"brand": "Marca"}},
+      "provider": {"title": "Proveedor preferido", "description": "Elige la fuente preferida de códigos infrarrojos.", "data": {"provider": "Proveedor de códigos"}}
     }
+  },
+  "options": {
+    "abort": {"no_remote_entities": "No se encontraron entidades remote. Configura primero una integración compatible y vuelve a intentarlo."},
+    "error": {"invalid_brand": "Selecciona una marca válida.", "invalid_device_type": "Selecciona un tipo de dispositivo válido.", "invalid_provider": "Selecciona un proveedor de códigos válido.", "invalid_remote": "Selecciona una entidad existente del dominio remote."},
+    "step": {
+      "remote": {"title": "Seleccionar control remoto", "description": "Elige la entidad remote de Home Assistant que enviará los códigos infrarrojos.", "data": {"entity_id": "Control remoto"}},
+      "device_type": {"title": "Tipo de dispositivo", "description": "Elige el tipo de dispositivo que deseas buscar.", "data": {"device_type": "Tipo de dispositivo"}},
+      "brand": {"title": "Marca", "description": "Elige la marca del dispositivo.", "data": {"brand": "Marca"}},
+      "provider": {"title": "Proveedor preferido", "description": "Elige la fuente preferida de códigos infrarrojos.", "data": {"provider": "Proveedor de códigos"}}
+    }
+  },
+  "selector": {
+    "device_type": {"options": {"tv": "TV", "air_conditioner": "Aire acondicionado", "fan": "Ventilador", "av_receiver": "Receptor AV", "projector": "Proyector", "set_top_box": "Decodificador", "audio_system": "Sistema de audio", "other": "Otro"}},
+    "brand": {"options": {"samsung": "Samsung", "lg": "LG", "sony": "Sony", "panasonic": "Panasonic", "philips": "Philips", "tcl": "TCL", "hisense": "Hisense", "sharp": "Sharp", "daikin": "Daikin", "midea": "Midea", "carrier": "Carrier", "gree": "Gree", "universal": "Universal", "other": "Otra"}},
+    "provider": {"options": {"smartir": "SmartIR", "irdb": "IRDB", "lirc": "LIRC", "auto": "Automático"}}
   }
 }
-

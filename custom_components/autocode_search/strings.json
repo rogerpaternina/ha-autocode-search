@@ -1,13 +1,127 @@
 {
+  "title": "AutoCode Search",
   "config": {
     "abort": {
-      "single_instance_allowed": "Only one Autocode Search entry is allowed."
+      "already_configured": "This remote is already configured.",
+      "no_remote_entities": "No remote entities were found. Set up a compatible remote integration, such as Broadlink or ESPHome, and try again.",
+      "single_instance_allowed": "Only one AutoCode Search entry is allowed."
+    },
+    "error": {
+      "invalid_brand": "Select a valid brand.",
+      "invalid_device_type": "Select a valid device type.",
+      "invalid_provider": "Select a valid code provider.",
+      "invalid_remote": "Select an existing entity in the remote domain."
     },
     "step": {
       "user": {
-        "description": "Set up Autocode Search. IR code search will be available in a future release."
+        "title": "Select remote",
+        "description": "Choose the Home Assistant remote entity that will send infrared codes.",
+        "data": {
+          "entity_id": "Remote"
+        }
+      },
+      "device_type": {
+        "title": "Device type",
+        "description": "Choose the type of device to search.",
+        "data": {
+          "device_type": "Device type"
+        }
+      },
+      "brand": {
+        "title": "Brand",
+        "description": "Choose the device brand.",
+        "data": {
+          "brand": "Brand"
+        }
+      },
+      "provider": {
+        "title": "Preferred provider",
+        "description": "Choose the preferred source for infrared codes.",
+        "data": {
+          "provider": "Code provider"
+        }
+      }
+    }
+  },
+  "options": {
+    "abort": {
+      "no_remote_entities": "No remote entities were found. Set up a compatible remote integration and try again."
+    },
+    "error": {
+      "invalid_brand": "Select a valid brand.",
+      "invalid_device_type": "Select a valid device type.",
+      "invalid_provider": "Select a valid code provider.",
+      "invalid_remote": "Select an existing entity in the remote domain."
+    },
+    "step": {
+      "remote": {
+        "title": "Select remote",
+        "description": "Choose the Home Assistant remote entity that will send infrared codes.",
+        "data": {
+          "entity_id": "Remote"
+        }
+      },
+      "device_type": {
+        "title": "Device type",
+        "description": "Choose the type of device to search.",
+        "data": {
+          "device_type": "Device type"
+        }
+      },
+      "brand": {
+        "title": "Brand",
+        "description": "Choose the device brand.",
+        "data": {
+          "brand": "Brand"
+        }
+      },
+      "provider": {
+        "title": "Preferred provider",
+        "description": "Choose the preferred source for infrared codes.",
+        "data": {
+          "provider": "Code provider"
+        }
+      }
+    }
+  },
+  "selector": {
+    "device_type": {
+      "options": {
+        "tv": "TV",
+        "air_conditioner": "Air Conditioner",
+        "fan": "Fan",
+        "av_receiver": "AV Receiver",
+        "projector": "Projector",
+        "set_top_box": "Set Top Box",
+        "audio_system": "Audio System",
+        "other": "Other"
+      }
+    },
+    "brand": {
+      "options": {
+        "samsung": "Samsung",
+        "lg": "LG",
+        "sony": "Sony",
+        "panasonic": "Panasonic",
+        "philips": "Philips",
+        "tcl": "TCL",
+        "hisense": "Hisense",
+        "sharp": "Sharp",
+        "daikin": "Daikin",
+        "midea": "Midea",
+        "carrier": "Carrier",
+        "gree": "Gree",
+        "universal": "Universal",
+        "other": "Other"
+      }
+    },
+    "provider": {
+      "options": {
+        "smartir": "SmartIR",
+        "irdb": "IRDB",
+        "lirc": "LIRC",
+        "auto": "Auto"
       }
     }
   }
 }
-

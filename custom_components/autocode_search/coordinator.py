@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, TypedDict
 from uuid import uuid4
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -30,12 +31,11 @@ class AutocodeSearchData(TypedDict):
 class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
     """Coordinate future IR-code searches and shared integration data."""
 
-    def __init__(self, hass: HomeAssistant, adapter: IRAdapter | None = None) -> None:
-        """Initialize the coordinator with an optional hardware adapter.
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Initialize the coordinator from a Home Assistant config entry.
 
-        The adapter is injected by the integration setup layer. This coordinator
-        intentionally only knows the generic ``IRAdapter`` interface and is
-        independent of concrete hardware implementations.
+        Options override the original config-entry data so reconfiguration takes
+        effect after the options flow reloads this integration.
         """
         super().__init__(
             hass,
@@ -43,7 +43,9 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             name=DOMAIN,
             update_interval=None,
         )
-        self.adapter = adapter
+        self.config_entry = entry
+        self.configuration: dict[str, Any] = {**entry.data, **entry.options}
+        self.adapter: IRAdapter | None = None
         self.search_engine: SearchEngine | None = None
         now = datetime.now(timezone.utc)
         # TODO: Replace this idle session when the search flow creates one.
@@ -58,6 +60,7 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             started_at=now,
             last_update=now,
         )
+        # TODO: Initialize a SearchEngine from the configured provider and remote.
 
     async def async_start_search(
         self,
