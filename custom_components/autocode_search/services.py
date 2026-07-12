@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Mapping
 from uuid import uuid4
 
 from .adapters.home_assistant_remote import HomeAssistantRemoteAdapter
-from .const import DOMAIN
+from .const import CONF_PROVIDER, DOMAIN
 from .engine import SearchEngine
 from .models import SearchSession, SearchStatus
 from .providers.memory import InMemoryCodeProvider
@@ -59,28 +59,37 @@ async def async_unload_services(hass: HomeAssistant) -> None:
 async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
     """Create and start a new infrared-code search."""
     coordinator = _get_coordinator(hass)
-    entity_id = _required_string(call.data, "entity_id")
-    codes = _required_codes(call.data)
-    now = datetime.now(timezone.utc)
-    session = SearchSession(
-        session_id=str(uuid4()),
-        device_type=_optional_string(call.data, "device_type"),
-        brand=_optional_string(call.data, "brand"),
-        command=_optional_string(call.data, "command"),
-        current_index=0,
-        total_codes=0,
-        status=SearchStatus.IDLE,
-        started_at=now,
-        last_update=now,
-    )
-    provider = InMemoryCodeProvider(codes)
-    adapter = HomeAssistantRemoteAdapter(hass, entity_id)
+    validation_complete = False
 
     try:
+        entity_id = _required_string(call.data, "entity_id")
+        codes = _required_codes(call.data)
+        now = datetime.now(timezone.utc)
+        _LOGGER.debug("Creating SearchSession")
+        session = SearchSession(
+            session_id=str(uuid4()),
+            device_type=_optional_string(call.data, "device_type"),
+            brand=_optional_string(call.data, "brand"),
+            command=_optional_string(call.data, "command"),
+            current_index=0,
+            total_codes=0,
+            status=SearchStatus.IDLE,
+            started_at=now,
+            last_update=now,
+        )
+        _LOGGER.debug("Creating provider")
+        provider = InMemoryCodeProvider(codes)
+        _LOGGER.debug("Creating adapter")
+        adapter = HomeAssistantRemoteAdapter(hass, entity_id)
+        validation_complete = True
         engine = await coordinator.async_start_search(provider, adapter, session)
+        _LOGGER.debug("Calling send_current()")
+        _LOGGER.debug("Calling remote.send_command()")
         first_code = await engine.send_current()
     except Exception as err:
-        _LOGGER.exception("Unable to start Autocode Search session")
+        if not validation_complete:
+            _log_validation_failure(call.data, coordinator)
+        _LOGGER.exception("Autocode Search failed")
         raise _service_error("Unable to start the Autocode Search session") from err
 
     _LOGGER.info("Started Autocode Search session %s for %s", session.session_id, entity_id)
@@ -92,9 +101,10 @@ async def _async_next_code(hass: HomeAssistant, call: ServiceCall) -> None:
     """Send the next infrared code for the active search."""
     engine = _get_engine(hass)
     try:
+        _LOGGER.debug("Calling remote.send_command()")
         code = await engine.next()
     except Exception as err:
-        _LOGGER.exception("Unable to send the next infrared code")
+        _LOGGER.exception("Autocode Search failed")
         raise _service_error("Unable to send the next infrared code") from err
 
     if code is None:
@@ -105,9 +115,10 @@ async def _async_previous_code(hass: HomeAssistant, call: ServiceCall) -> None:
     """Send the previous infrared code for the active search."""
     engine = _get_engine(hass)
     try:
+        _LOGGER.debug("Calling remote.send_command()")
         code = await engine.previous()
     except Exception as err:
-        _LOGGER.exception("Unable to send the previous infrared code")
+        _LOGGER.exception("Autocode Search failed")
         raise _service_error("Unable to send the previous infrared code") from err
 
     if code is None:
@@ -120,7 +131,7 @@ async def _async_finish_search(hass: HomeAssistant, call: ServiceCall) -> None:
     try:
         await engine.finish()
     except Exception as err:
-        _LOGGER.exception("Unable to finish the infrared-code search")
+        _LOGGER.exception("Autocode Search failed")
         raise _service_error("Unable to finish the infrared-code search") from err
 
     _LOGGER.info("Finished Autocode Search session %s", engine.session.session_id)
@@ -173,6 +184,22 @@ def _required_codes(data: Mapping[str, Any]) -> list[str]:
     if not all(isinstance(code, str) and code for code in codes):
         raise _service_error("Every code must be a non-empty string")
     return codes
+
+
+def _log_validation_failure(
+    data: Mapping[str, Any], coordinator: AutocodeSearchCoordinator
+) -> None:
+    """Log the complete service validation context for development diagnostics."""
+    codes = data.get("codes")
+    number_of_codes = len(codes) if isinstance(codes, list) else None
+    _LOGGER.warning(
+        "Autocode Search validation failed: entity_id=%r provider=%r "
+        "number_of_codes=%r current_session_id=%r",
+        data.get("entity_id"),
+        coordinator.configuration.get(CONF_PROVIDER),
+        number_of_codes,
+        coordinator.search_session.session_id,
+    )
 
 
 def _service_error(message: str) -> Exception:

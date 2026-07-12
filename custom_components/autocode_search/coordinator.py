@@ -69,7 +69,10 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         session: SearchSession,
     ) -> SearchEngine:
         """Create, start, and retain the search engine for a new session."""
+        _LOGGER.debug("Creating SearchEngine")
         engine = SearchEngine(provider, adapter, session)
+        _LOGGER.debug("Calling engine.start()")
+        _LOGGER.debug("Calling provider.load()")
         await engine.start()
         self.adapter = adapter
         self.search_session = session
