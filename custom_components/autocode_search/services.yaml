@@ -1,3 +1,45 @@
-# TODO: Document integration services here when they are implemented.
-{}
+start_search:
+  name: Start search
+  description: Start a search and send the first explicitly supplied infrared code.
+  fields:
+    entity_id:
+      name: Remote entity
+      description: Entity ID of the remote that will transmit the codes.
+      required: true
+      selector:
+        entity:
+          domain: remote
+    codes:
+      name: Infrared codes
+      description: Ordered list of infrared codes to test.
+      required: true
+      example: ["JgBQAAAB"]
+      selector:
+        object:
+    device_type:
+      name: Device type
+      description: Optional device type recorded in the search session.
+      selector:
+        text:
+    brand:
+      name: Brand
+      description: Optional brand recorded in the search session.
+      selector:
+        text:
+    command:
+      name: Command
+      description: Optional command recorded in the search session.
+      selector:
+        text:
 
+next_code:
+  name: Next code
+  description: Send the next infrared code in the active search.
+
+previous_code:
+  name: Previous code
+  description: Send the previous infrared code in the active search.
+
+finish_search:
+  name: Finish search
+  description: Finish the active infrared-code search.

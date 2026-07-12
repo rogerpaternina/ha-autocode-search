@@ -12,7 +12,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .adapters.base import IRAdapter
 from .const import DOMAIN
+from .engine import SearchEngine
 from .models import SearchSession, SearchStatus
+from .providers.base import CodeProvider
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +44,7 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             update_interval=None,
         )
         self.adapter = adapter
+        self.search_engine: SearchEngine | None = None
         now = datetime.now(timezone.utc)
         # TODO: Replace this idle session when the search flow creates one.
         self.search_session = SearchSession(
@@ -55,6 +58,20 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             started_at=now,
             last_update=now,
         )
+
+    async def async_start_search(
+        self,
+        provider: CodeProvider,
+        adapter: IRAdapter,
+        session: SearchSession,
+    ) -> SearchEngine:
+        """Create, start, and retain the search engine for a new session."""
+        engine = SearchEngine(provider, adapter, session)
+        await engine.start()
+        self.adapter = adapter
+        self.search_session = session
+        self.search_engine = engine
+        return engine
 
     async def _async_update_data(self) -> AutocodeSearchData:
         """Return the latest shared data for the integration."""
