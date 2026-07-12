@@ -1,0 +1,13 @@
+services:
+  homeassistant:
+    container_name: autocode-search-homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    environment:
+      TZ: America/Bogota
+    volumes:
+      - ./config:/config
+      - ../custom_components:/config/custom_components:ro
+
