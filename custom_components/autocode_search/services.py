@@ -12,6 +12,7 @@ from uuid import uuid4
 from .adapters.home_assistant_remote import HomeAssistantRemoteAdapter
 from .const import CONF_PROVIDER, DEFAULT_PROVIDER, DOMAIN
 from .models import SearchSession, SearchStatus
+from .models.ir_code import IRCode
 from .models.search_filter import SearchFilter
 
 if TYPE_CHECKING:
@@ -28,6 +29,7 @@ SERVICE_FINISH_SEARCH = "finish_search"
 SERVICE_PAUSE = "pause"
 SERVICE_RESUME = "resume"
 SERVICE_CANCEL = "cancel"
+SERVICE_MARK_SUCCESS = "mark_success"
 
 _REGISTERED_SERVICES = (
     SERVICE_START_SEARCH,
@@ -37,6 +39,7 @@ _REGISTERED_SERVICES = (
     SERVICE_PAUSE,
     SERVICE_RESUME,
     SERVICE_CANCEL,
+    SERVICE_MARK_SUCCESS,
 )
 
 
@@ -62,6 +65,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     hass.services.async_register(
         DOMAIN, SERVICE_CANCEL, partial(_async_cancel_search, hass)
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_MARK_SUCCESS, partial(_async_mark_success, hass)
     )
 
 
@@ -211,6 +217,32 @@ async def _async_cancel_search(hass: HomeAssistant, call: ServiceCall) -> None:
         "Cancelled Autocode Search session %s",
         coordinator.search_session.session_id,
     )
+
+
+async def _async_mark_success(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Record a successful infrared-code attempt in success memory."""
+    coordinator = _get_coordinator(hass)
+    try:
+        provider = _required_string(call.data, "provider")
+        payload = _required_string(call.data, "payload")
+        protocol = _optional_filter_string(call.data, "protocol")
+        search_filter = _build_search_filter(call.data)
+        command = _optional_filter_string(call.data, "command")
+        ir_code = IRCode(
+            name=command or "success",
+            payload=payload,
+            protocol=protocol,
+            manufacturer=_optional_filter_string(call.data, "manufacturer"),
+            model=_optional_filter_string(call.data, "model"),
+            device_type=_optional_filter_string(call.data, "device_type"),
+        )
+        coordinator.success_memory.remember(search_filter, ir_code, provider)
+        await coordinator.async_publish_session()
+    except Exception as err:
+        _LOGGER.exception("Autocode Search failed")
+        raise _service_error("Unable to record the successful infrared code") from err
+
+    _LOGGER.info("Recorded successful infrared code from provider %s", provider)
 
 
 def _get_coordinator(hass: HomeAssistant) -> AutocodeSearchCoordinator:

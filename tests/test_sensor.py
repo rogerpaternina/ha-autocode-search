@@ -14,10 +14,12 @@ from custom_components.autocode_search.sensor import (
     AutocodeDuplicatesRemovedSensor,
     AutocodeElapsedTimeSensor,
     AutocodeFilterSummarySensor,
+    AutocodeLastSuccessSensor,
     AutocodeProgressSensor,
     AutocodeProviderOrderSensor,
     AutocodeProviderRankingReasonSensor,
     AutocodeProvidersUsedSensor,
+    AutocodeSuccessRecordsSensor,
     AutocodeTotalCodesSensor,
 )
 
@@ -57,6 +59,8 @@ def _create_sensor_environment() -> tuple[AutocodeSearchCoordinator, SimpleNames
         "duplicates_removed": 54,
         "provider_order": ["IRDB", "SmartIR"],
         "provider_ranking_reason": "Model specified",
+        "success_count": 0,
+        "last_success": "",
     }
     return coordinator, entry
 
@@ -161,5 +165,32 @@ def test_provider_ranking_reason_sensor_without_reason_shows_none() -> None:
     coordinator, entry = _create_sensor_environment()
     coordinator.data["provider_ranking_reason"] = ""
     sensor = AutocodeProviderRankingReasonSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "None"
+
+
+def test_success_records_sensor_reflects_coordinator_data() -> None:
+    """Success records sensor exposes the remembered success count."""
+    coordinator, entry = _create_sensor_environment()
+    coordinator.data["success_count"] = 125
+    sensor = AutocodeSuccessRecordsSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == 125
+
+
+def test_last_success_sensor_reflects_coordinator_data() -> None:
+    """Last success sensor exposes the latest remembered success."""
+    coordinator, entry = _create_sensor_environment()
+    coordinator.data["last_success"] = "LG OLED55 POWER"
+    sensor = AutocodeLastSuccessSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "LG OLED55 POWER"
+
+
+def test_last_success_sensor_without_value_shows_none() -> None:
+    """Last success sensor falls back to None when empty."""
+    coordinator, entry = _create_sensor_environment()
+    coordinator.data["last_success"] = ""
+    sensor = AutocodeLastSuccessSensor(coordinator, entry)  # type: ignore[arg-type]
 
     assert sensor.native_value == "None"

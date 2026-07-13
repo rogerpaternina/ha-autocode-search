@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 from typing import Protocol
 
+from ..memory.success_memory import SuccessMemory, default_success_memory
 from ..models.search_filter import SearchFilter
 from .base import CodeProvider
 
@@ -95,9 +96,16 @@ class ProviderRanking:
     the composite provider contract.
     """
 
-    def __init__(self, rules: tuple[RankingRule, ...] | None = None) -> None:
+    def __init__(
+        self,
+        rules: tuple[RankingRule, ...] | None = None,
+        success_memory: SuccessMemory | None = None,
+    ) -> None:
         """Initialize the ranking engine with an ordered rule chain."""
         self._rules = rules if rules is not None else _RANKING_RULES
+        self._success_memory = (
+            success_memory if success_memory is not None else default_success_memory()
+        )
 
     def rank(
         self,
@@ -114,9 +122,45 @@ class ProviderRanking:
 
         rule = self._select_rule(search_filter)
         ordered = self._sort_providers(providers, rule.priorities())
-        result = RankingResult(ordered, rule.reason())
+        reason = rule.reason()
+        boosted_provider = self._boost_from_success_memory(search_filter, ordered)
+        if boosted_provider is not None:
+            reason = f"Success memory ({boosted_provider})"
+        result = RankingResult(ordered, reason)
         self._log_ranking(search_filter, result)
         return result
+
+    def _boost_from_success_memory(
+        self,
+        search_filter: SearchFilter,
+        ordered_providers: list[CodeProvider],
+    ) -> str | None:
+        matches = self._success_memory.find(search_filter)
+        if not matches:
+            return None
+
+        preferred_provider = matches[0].provider
+        preferred_index = next(
+            (
+                index
+                for index, provider in enumerate(ordered_providers)
+                if provider_display_name(provider) == preferred_provider
+            ),
+            None,
+        )
+        if preferred_index is None or preferred_index == 0:
+            if preferred_index == 0:
+                _LOGGER.debug("Success match found")
+                _LOGGER.debug("Ranking boosted")
+                _LOGGER.debug("Provider moved to first position")
+            return preferred_provider if preferred_index == 0 else None
+
+        provider = ordered_providers.pop(preferred_index)
+        ordered_providers.insert(0, provider)
+        _LOGGER.debug("Success match found")
+        _LOGGER.debug("Ranking boosted")
+        _LOGGER.debug("Provider moved to first position")
+        return preferred_provider
 
     def _select_rule(self, search_filter: SearchFilter) -> RankingRule:
         for rule in self._rules:

@@ -47,7 +47,9 @@
       "providers_used": { "name": "Providers used" },
       "duplicates_removed": { "name": "Duplicates removed" },
       "provider_order": { "name": "Provider order" },
-      "provider_ranking_reason": { "name": "Provider ranking reason" }
+      "provider_ranking_reason": { "name": "Provider ranking reason" },
+      "success_records": { "name": "Success records" },
+      "last_success": { "name": "Last success" }
     },
     "binary_sensor": {
       "running": { "name": "Running" }

@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .adapters.base import IRAdapter
 from .const import DOMAIN
 from .engine import SearchEngine
+from .memory import SuccessMemory, default_success_memory
 from .models import SearchSession, SearchStatus
 from .models.search_filter import SearchFilter
 from .providers.base import CodeProvider
@@ -48,6 +49,8 @@ class AutocodeSearchData(TypedDict):
     duplicates_removed: int
     provider_order: list[str]
     provider_ranking_reason: str
+    success_count: int
+    last_success: str
 
 
 class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
@@ -69,6 +72,7 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         self.configuration: dict[str, Any] = {**entry.data, **entry.options}
         self.adapter: IRAdapter | None = None
         self.search_engine: SearchEngine | None = None
+        self.success_memory: SuccessMemory = default_success_memory()
         now = datetime.now(UTC)
         self.search_session = SearchSession(
             session_id=str(uuid4()),
@@ -162,6 +166,8 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             duplicates_removed=session.duplicates_removed,
             provider_order=session.provider_order,
             provider_ranking_reason=session.provider_ranking_reason,
+            success_count=self.success_memory.count(),
+            last_success=self._format_last_success(),
         )
 
     async def _async_get_adapter_status(self) -> dict[str, Any]:
@@ -184,6 +190,13 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         if self.search_engine is None:
             raise RuntimeError("No active Autocode Search session")
         return self.search_engine
+
+    def _format_last_success(self) -> str:
+        """Return a compact label for the most recent success record."""
+        record = self.success_memory.last_record()
+        if record is None:
+            return ""
+        return self.success_memory.format_record_summary(record)
 
 
 def _sync_provider_statistics(provider: CodeProvider, session: SearchSession) -> None:

@@ -64,3 +64,45 @@ resume:
 cancel:
   name: Cancel search
   description: Cancel the active infrared-code search immediately.
+
+mark_success:
+  name: Mark success
+  description: Record a successful infrared code so future searches can prioritize it.
+  fields:
+    provider:
+      name: Provider
+      description: Provider that supplied the successful code.
+      required: true
+      selector:
+        text:
+    payload:
+      name: Payload
+      description: Infrared payload that worked successfully.
+      required: true
+      selector:
+        text:
+    protocol:
+      name: Protocol
+      description: Optional infrared protocol for the successful code.
+      selector:
+        text:
+    manufacturer:
+      name: Manufacturer
+      description: Optional manufacturer associated with the successful code.
+      selector:
+        text:
+    model:
+      name: Model
+      description: Optional model associated with the successful code.
+      selector:
+        text:
+    device_type:
+      name: Device type
+      description: Optional device type associated with the successful code.
+      selector:
+        text:
+    command:
+      name: Command
+      description: Optional command associated with the successful code.
+      selector:
+        text:

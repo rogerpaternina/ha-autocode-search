@@ -38,7 +38,9 @@
       "providers_used": { "name": "Proveedores utilizados" },
       "duplicates_removed": { "name": "Duplicados eliminados" },
       "provider_order": { "name": "Orden de proveedores" },
-      "provider_ranking_reason": { "name": "Motivo del orden de proveedores" }
+      "provider_ranking_reason": { "name": "Motivo del orden de proveedores" },
+      "success_records": { "name": "Éxitos registrados" },
+      "last_success": { "name": "Último éxito" }
     },
     "binary_sensor": {
       "running": { "name": "En ejecución" }

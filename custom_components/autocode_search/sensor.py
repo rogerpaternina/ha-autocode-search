@@ -40,6 +40,8 @@ async def async_setup_entry(
             AutocodeDuplicatesRemovedSensor(coordinator, entry),
             AutocodeProviderOrderSensor(coordinator, entry),
             AutocodeProviderRankingReasonSensor(coordinator, entry),
+            AutocodeSuccessRecordsSensor(coordinator, entry),
+            AutocodeLastSuccessSensor(coordinator, entry),
         ]
     )
 
@@ -209,3 +211,27 @@ class AutocodeProviderRankingReasonSensor(AutocodeSearchSensor):
     def native_value(self) -> str:
         """Return the ranking reason."""
         return self.coordinator.data["provider_ranking_reason"] or "None"
+
+
+class AutocodeSuccessRecordsSensor(AutocodeSearchSensor):
+    """Expose how many successful codes are remembered."""
+
+    _attr_translation_key = "success_records"
+    _attr_unique_id = "autocode_success_records"
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of remembered successes."""
+        return self.coordinator.data["success_count"]
+
+
+class AutocodeLastSuccessSensor(AutocodeSearchSensor):
+    """Expose the most recently recorded successful code."""
+
+    _attr_translation_key = "last_success"
+    _attr_unique_id = "autocode_last_success"
+
+    @property
+    def native_value(self) -> str:
+        """Return the latest success summary."""
+        return self.coordinator.data["last_success"] or "None"
