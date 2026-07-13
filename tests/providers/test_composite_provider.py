@@ -18,6 +18,7 @@ from custom_components.autocode_search.providers.factory import (
 )
 from custom_components.autocode_search.providers.filtering import filter_codes
 from custom_components.autocode_search.providers.irdb import IRDBProvider
+from custom_components.autocode_search.providers.lirc import LIRCProvider
 from custom_components.autocode_search.providers.smartir import SmartIRProvider
 
 
@@ -287,10 +288,11 @@ def test_provider_factory_creates_composite_in_configured_order(
     provider = ProviderFactory.create("composite", FakeHomeAssistant(tmp_path))
 
     assert isinstance(provider, CompositeCodeProvider)
-    assert DEFAULT_COMPOSITE_ORDER == ("smartir", "irdb")
+    assert DEFAULT_COMPOSITE_ORDER == ("smartir", "irdb", "lirc")
     inner = provider._providers
     assert isinstance(inner[0], SmartIRProvider)
     assert isinstance(inner[1], IRDBProvider)
+    assert isinstance(inner[2], LIRCProvider)
 
 
 def test_provider_factory_supports_custom_composite_order(tmp_path: Path) -> None:

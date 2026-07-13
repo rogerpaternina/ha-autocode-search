@@ -23,7 +23,7 @@ type ProviderClass = (
 # Priority order used when the composite provider is requested. Extend this
 # list (e.g. with "lirc") to include future providers without touching the
 # SearchEngine or the composite implementation.
-DEFAULT_COMPOSITE_ORDER: tuple[str, ...] = ("smartir", "irdb")
+DEFAULT_COMPOSITE_ORDER: tuple[str, ...] = ("smartir", "irdb", "lirc")
 
 
 class ProviderFactory:
@@ -70,4 +70,4 @@ class ProviderFactory:
         if provider_class is IRDBProvider:
             return IRDBProvider(hass)
 
-        return LIRCProvider()
+        return LIRCProvider(hass)
