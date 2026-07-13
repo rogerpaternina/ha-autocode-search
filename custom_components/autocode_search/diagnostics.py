@@ -24,5 +24,4 @@ async def async_get_config_entry_diagnostics(
             "version": entry.version,
         },
         "coordinator_data": coordinator.data,
-        # TODO: Redact search-provider configuration if it is added in the future.
     }

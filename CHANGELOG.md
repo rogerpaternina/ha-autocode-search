@@ -7,16 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-rc1] - 2026-07-13
+
 ### Added
 
-- Lovelace dashboard de ejemplo (`examples/lovelace-dashboard.yaml`) con tarjetas condicionales.
-- Helpers de ejemplo (`examples/entities.yaml`) con `input_select` e `input_text`.
-- Automatizaciones de ejemplo (`examples/automations.yaml`): confirmación, timeout, notificación e inicio rápido.
-- Scripts de ejemplo (`examples/scripts.yaml`) para POWER, VOLUME UP, MUTE e INPUT.
-- Documentación completa: README, arquitectura, CONTRIBUTING y release checklist.
-- Tests de validación para los archivos YAML de ejemplo.
+- **Sprint 22** — Hardening, optimization, and release candidate preparation.
+- Development benchmarks (`tools/benchmark.py`) for providers, ranking, and memory.
+- Coverage script (`tools/coverage.sh`) and profiling guide (`docs/profiling.md`).
+- Release validation tool (`tools/release_check.py`).
+- GitHub issue and pull request templates, `CODEOWNERS`, and `SECURITY.md`.
+- Compatibility matrix (`docs/compatibility.md`) and v1 release notes.
+- Product roadmap (`docs/roadmap.md`) replacing inline TODO comments.
 
-## [0.2.0] - 2026-07-01
+### Changed
+
+- Service exception handling now catches specific errors instead of bare `Exception`.
+- Removed redundant debug logging from service handlers.
+- `InMemoryCodeProvider` typing improved without `type: ignore` comments.
+- `ProviderFactory` docstrings translated to English.
+- Version bumped to `1.0.0-rc1` across manifest and pyproject.
+
+### Removed
+
+- Stale `TODO` comments from integration code (tracked in roadmap).
+
 
 ### Added
 
@@ -157,7 +171,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI con pytest, ruff, black, mypy y hassfest.
 - Entorno Docker de desarrollo.
 
-[Unreleased]: https://github.com/rogerpaternina/ha-autocode-search/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/rogerpaternina/ha-autocode-search/compare/v1.0.0-rc1...HEAD
+[1.0.0-rc1]: https://github.com/rogerpaternina/ha-autocode-search/compare/v0.2.0...v1.0.0-rc1
 [0.2.0]: https://github.com/rogerpaternina/ha-autocode-search/compare/v0.1.9...v0.2.0
 [0.1.9]: https://github.com/rogerpaternina/ha-autocode-search/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/rogerpaternina/ha-autocode-search/compare/v0.1.7...v0.1.8

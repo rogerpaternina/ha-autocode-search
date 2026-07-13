@@ -238,3 +238,70 @@ custom_components/autocode_search/
 - **Sin configuración YAML** — Todo se configura desde el Config Flow.
 - **Sin dependencias externas** — `requirements: []` en el manifest.
 - **Arquitectura estable** — El motor, proveedores y memoria no deben modificarse sin un sprint dedicado.
+
+## Capas detalladas
+
+### Provider Layer
+
+```text
+ProviderFactory
+      │
+      ▼
+CompositeCodeProvider ─────────────────────┐
+      │                                    │
+      ├── SmartIRProvider ──► JSON codes   │
+      ├── IRDBProvider    ──► CSV / JSON   ├──► filter_codes()
+      └── LIRCProvider    ──► .conf files  │
+      │                                    │
+      └── ProviderRanking (order + boost)  │
+                                           ▼
+                                    list[IRCode]
+```
+
+### Learning Layer
+
+```text
+confirm_success / mark_success
+            │
+            ▼
+     SuccessMemory.find() / remember()
+            │
+            ▼
+    SuccessRepository (optional facade)
+            │
+            ▼
+     StorageBackend.async_save()
+            │
+            ▼
+   .storage/autocode_search_success.json
+```
+
+### Storage Layer
+
+```text
+┌─────────────────────────────────────┐
+│           StorageBackend            │
+│  async_load() ──► list[SuccessRecord]│
+│  async_save() ◄── persist callback  │
+│  attach(memory) ──► on_change hook  │
+└─────────────────────────────────────┘
+```
+
+### Dashboard Layer
+
+```text
+examples/lovelace-dashboard.yaml
+        │
+        ├── Helpers (input_select / input_text)
+        ├── Scripts (search_power, search_start, …)
+        └── Services (autocode_search.*)
+                │
+                ▼
+        Integration entities (sensors, buttons)
+                │
+                ▼
+        Conditional cards (idle / running / confirm)
+```
+
+Los ejemplos viven en `examples/` y no forman parte del paquete de integración
+instalado por HACS; el usuario los copia o importa manualmente.

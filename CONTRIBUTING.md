@@ -127,6 +127,38 @@ Run a specific test file:
 pytest tests/test_services.py -v
 ```
 
+## Development tools
+
+### Coverage
+
+```sh
+./tools/coverage.sh
+```
+
+Generates `htmlcov/index.html` with line coverage for the integration.
+
+### Benchmarks
+
+```sh
+python3 tools/benchmark.py --files 5 --commands-per-file 20
+```
+
+Measures SmartIR, IRDB, LIRC, Composite, ranking, and Success Memory load times.
+
+### Profiling
+
+See [docs/profiling.md](docs/profiling.md) for cProfile and py-spy instructions.
+
+### Release validation
+
+Before tagging a release:
+
+```sh
+python3 tools/release_check.py
+```
+
+Use `--skip-quality` to validate documentation and version metadata only.
+
 ## Pull request guidelines
 
 1. Create a feature branch from `main` or `develop`.

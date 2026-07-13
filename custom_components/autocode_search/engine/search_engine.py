@@ -141,7 +141,6 @@ class SearchEngine:
         """Mark the current search session as finished."""
         self.session.finish()
         _LOGGER.debug("Search finished")
-        # TODO: Persist or expose the completed search result.
 
     async def run(self, search_filter: SearchFilter | None = None) -> None:
         """Iterate through every code while honoring pause and cancel controls."""

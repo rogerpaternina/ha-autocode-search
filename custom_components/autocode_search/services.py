@@ -16,6 +16,8 @@ from .models.ir_code import IRCode
 from .models.search_filter import SearchFilter
 from .success_workflow import normalize_manual_provider, remember_success
 
+_SERVICE_FAILURES = (RuntimeError, ValueError, OSError, TypeError)
+
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant, ServiceCall
 
@@ -138,15 +140,12 @@ async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
         engine = await coordinator.async_start_search(
             provider, adapter, session, search_filter
         )
-        _LOGGER.debug("Calling send_current()")
-        _LOGGER.debug("Calling remote.send_command()")
         first_code = await engine.send_current()
         await coordinator.async_publish_session()
-    except Exception as err:
+    except _SERVICE_FAILURES as err:
         if not validation_complete:
             _log_validation_failure(call.data, coordinator)
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to start the Autocode Search session") from err
+        _raise_service_failure(err, "Unable to start the Autocode Search session")
 
     _LOGGER.info(
         "Started Autocode Search session %s for %s", session.session_id, entity_id
@@ -160,12 +159,10 @@ async def _async_next_code(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _get_coordinator(hass)
     engine = _get_engine(coordinator)
     try:
-        _LOGGER.debug("Calling remote.send_command()")
         code = await engine.next()
         await coordinator.async_publish_session()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to send the next infrared code") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to send the next infrared code")
 
     if code is None:
         _LOGGER.warning("No next infrared code is available")
@@ -176,12 +173,10 @@ async def _async_previous_code(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _get_coordinator(hass)
     engine = _get_engine(coordinator)
     try:
-        _LOGGER.debug("Calling remote.send_command()")
         code = await engine.previous()
         await coordinator.async_publish_session()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to send the previous infrared code") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to send the previous infrared code")
 
     if code is None:
         _LOGGER.warning("No previous infrared code is available")
@@ -192,9 +187,8 @@ async def _async_finish_search(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _get_coordinator(hass)
     try:
         await coordinator.async_finish_search()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to finish the infrared-code search") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to finish the infrared-code search")
 
     _LOGGER.info(
         "Finished Autocode Search session %s",
@@ -207,9 +201,8 @@ async def _async_pause_search(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _get_coordinator(hass)
     try:
         await coordinator.async_pause_search()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to pause the infrared-code search") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to pause the infrared-code search")
 
 
 async def _async_resume_search(hass: HomeAssistant, call: ServiceCall) -> None:
@@ -217,9 +210,8 @@ async def _async_resume_search(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _get_coordinator(hass)
     try:
         await coordinator.async_resume_search()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to resume the infrared-code search") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to resume the infrared-code search")
 
 
 async def _async_cancel_search(hass: HomeAssistant, call: ServiceCall) -> None:
@@ -227,9 +219,8 @@ async def _async_cancel_search(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _get_coordinator(hass)
     try:
         await coordinator.async_cancel_search()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to cancel the infrared-code search") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to cancel the infrared-code search")
 
     _LOGGER.info(
         "Cancelled Autocode Search session %s",
@@ -261,9 +252,8 @@ async def _async_mark_success(hass: HomeAssistant, call: ServiceCall) -> None:
             normalize_manual_provider(provider),
         )
         await coordinator.async_publish_session()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to record the successful infrared code") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to record the successful infrared code")
 
     _LOGGER.info("Recorded successful infrared code from provider %s", provider)
 
@@ -274,9 +264,8 @@ async def _async_clear_success_memory(hass: HomeAssistant, call: ServiceCall) ->
     try:
         coordinator.success_memory.clear()
         await coordinator.async_publish_session()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to clear success memory") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to clear success memory")
 
     _LOGGER.info("Cleared Autocode Search success memory")
 
@@ -286,9 +275,8 @@ async def _async_confirm_success(hass: HomeAssistant, call: ServiceCall) -> None
     coordinator = _get_coordinator(hass)
     try:
         await coordinator.async_confirm_success()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to confirm the successful infrared code") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to confirm the successful infrared code")
 
     _LOGGER.info(
         "Confirmed successful infrared code from provider %s",
@@ -301,9 +289,8 @@ async def _async_reject_result(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _get_coordinator(hass)
     try:
         await coordinator.async_reject_result()
-    except Exception as err:
-        _LOGGER.exception("Autocode Search failed")
-        raise _service_error("Unable to reject the last infrared code result") from err
+    except _SERVICE_FAILURES as err:
+        _raise_service_failure(err, "Unable to reject the last infrared code result")
 
     _LOGGER.info("Rejected the last infrared code result")
 
@@ -396,6 +383,16 @@ def _log_validation_failure(
         number_of_codes,
         coordinator.search_session.session_id,
     )
+
+
+def _raise_service_failure(err: BaseException, message: str) -> None:
+    """Log unexpected failures and translate them into service errors."""
+    from homeassistant.exceptions import HomeAssistantError
+
+    if isinstance(err, HomeAssistantError):
+        raise err
+    _LOGGER.exception("%s", message)
+    raise _service_error(message) from err
 
 
 def _service_error(message: str) -> Exception:

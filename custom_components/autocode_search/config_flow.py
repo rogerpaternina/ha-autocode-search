@@ -84,7 +84,7 @@ class _AutocodeSearchFlowMixin:
 class AutocodeSearchConfigFlow(
     _AutocodeSearchFlowMixin,
     config_entries.ConfigFlow,
-    domain=DOMAIN,  # type: ignore[call-arg]
+    domain=DOMAIN,  # type: ignore[call-arg]  # homeassistant stub lacks decorator typing
 ):
     """Handle the UI configuration flow for Autocode Search."""
 

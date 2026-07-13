@@ -1,3 +1,5 @@
+"""Represent an infrared code independently of its source provider."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

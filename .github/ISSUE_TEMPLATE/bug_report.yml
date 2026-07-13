@@ -1,0 +1,71 @@
+name: Bug Report
+description: Report a reproducible issue with AutoCode Search
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please search existing issues first.
+
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      description: Version shown in HACS or manifest.json
+      placeholder: "1.0.0-rc1"
+    validations:
+      required: true
+
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Code provider
+      options:
+        - auto (composite)
+        - smartir
+        - irdb
+        - lirc
+        - custom code list
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Configure remote entity ...
+        2. Call autocode_search.start_search ...
+        3. Observe error ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Enable debug logging for custom_components.autocode_search
+      render: shell

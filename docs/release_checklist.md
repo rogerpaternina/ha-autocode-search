@@ -8,7 +8,8 @@ Use this checklist before publishing a new version of AutoCode Search to HACS.
 - [ ] Ruff passes (`ruff check .`)
 - [ ] Black passes (`black --check .`)
 - [ ] Mypy passes (`mypy custom_components/autocode_search`)
-- [ ] Hassfest CI workflow passes on the release branch
+- [ ] `tools/release_check.py` passes locally
+- [ ] `tools/benchmark.py` runs without errors
 - [ ] No open critical bugs in the issue tracker
 
 ## Version bump

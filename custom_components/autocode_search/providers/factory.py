@@ -1,3 +1,5 @@
+"""Factory for creating infrared code providers."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -27,7 +29,7 @@ DEFAULT_COMPOSITE_ORDER: tuple[str, ...] = ("smartir", "irdb", "lirc")
 
 
 class ProviderFactory:
-    """Factory para crear proveedores IR."""
+    """Create infrared code providers by name."""
 
     _PROVIDERS: dict[str, ProviderClass] = {
         "smartir": SmartIRProvider,
@@ -45,7 +47,7 @@ class ProviderFactory:
         codes: list[str] | None = None,
         composite_order: Sequence[str] | None = None,
     ) -> CodeProvider:
-        """Crear proveedor por nombre."""
+        """Create a provider instance for the requested name."""
         name = provider_name.lower()
 
         if name == "composite":

@@ -15,12 +15,14 @@ class InMemoryCodeProvider(CodeProvider):
 
     def __init__(self, codes: list[IRCode] | list[str]) -> None:
         """Initialize the provider with codes in their search order."""
-        if codes and isinstance(codes[0], str):
+        if not codes:
+            self._all_codes: list[IRCode] = []
+        elif isinstance(codes[0], str):
             self._all_codes = [
-                IRCode(name=code, payload=code) for code in codes  # type: ignore[arg-type]
+                IRCode(name=code, payload=code) for code in codes
             ]
         else:
-            self._all_codes = list(codes)  # type: ignore[arg-type]
+            self._all_codes = list(codes)
         self._active_codes: list[IRCode] = []
         self._index = 0
         self._loaded = False

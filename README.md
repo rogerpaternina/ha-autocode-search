@@ -66,6 +66,13 @@ Consulta [docs/architecture.md](docs/architecture.md) para diagramas detallados 
 - Home Assistant 2026.1.0 o superior.
 - Una entidad `remote.*` configurada (Broadlink, ESPHome, etc.).
 
+Matriz completa de compatibilidad: [docs/compatibility.md](docs/compatibility.md).
+
+## Versión actual
+
+**1.0.0-rc1** — Release Candidate. Notas de versión:
+[docs/release_notes_v1.md](docs/release_notes_v1.md).
+
 ## Configuración
 
 La integración se configura exclusivamente desde la interfaz; no admite configuración YAML.
@@ -123,13 +130,12 @@ Un dashboard Lovelace listo para importar está disponible en [`examples/lovelac
 
 ### Capturas de pantalla
 
-<!-- TODO: Agregar captura del panel de estado -->
+Las capturas de ejemplo están planificadas para la versión estable 1.0.0.
+Consulta [docs/roadmap.md](docs/roadmap.md#v10--release-assets).
+
+<!-- Placeholders until screenshots are added -->
 ![Estado de búsqueda](docs/images/dashboard-status.png)
-
-<!-- TODO: Agregar captura de confirmación -->
 ![Confirmación de resultado](docs/images/dashboard-confirmation.png)
-
-<!-- TODO: Agregar captura de estadísticas -->
 ![Estadísticas de aprendizaje](docs/images/dashboard-stats.png)
 
 El dashboard incluye:
@@ -221,6 +227,15 @@ La integración crea un dispositivo **Autocode Search** con sensores de diagnós
 ## Desarrollo
 
 Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para instrucciones de desarrollo, tests y calidad de código.
+
+### Herramientas de desarrollo
+
+| Herramienta | Uso |
+|-------------|-----|
+| `tools/benchmark.py` | Medir tiempos de carga de proveedores y memoria |
+| `tools/coverage.sh` | Ejecutar pytest con informe HTML de cobertura |
+| `tools/release_check.py` | Validar preparación de release antes de etiquetar |
+| `docs/profiling.md` | Guía de cProfile y py-spy |
 
 Entorno Docker disponible en [`docker/`](docker/).
 
