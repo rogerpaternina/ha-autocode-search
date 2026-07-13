@@ -1,4 +1,10 @@
-# Autocode Search
+# AutoCode Search
+
+![Tests](https://github.com/rogerpaternina/ha-autocode-search/actions/workflows/tests.yml/badge.svg)
+
+![Quality](https://github.com/rogerpaternina/ha-autocode-search/actions/workflows/quality.yml/badge.svg)
+
+![Hassfest](https://github.com/rogerpaternina/ha-autocode-search/actions/workflows/hassfest.yml/badge.svg)
 
 Integración personalizada para Home Assistant que, en una versión futura,
 permitirá buscar códigos infrarrojos para dispositivos.
