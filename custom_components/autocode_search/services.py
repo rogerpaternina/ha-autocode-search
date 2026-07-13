@@ -106,7 +106,7 @@ async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
                 CONF_PROVIDER, DEFAULT_PROVIDER
             )
             if provider_name == "auto":
-                provider_name = "smartir"
+                provider_name = "composite"
             provider = ProviderFactory.create(provider_name, hass)
         _LOGGER.debug("Creating adapter")
         adapter = HomeAssistantRemoteAdapter(hass, entity_id)

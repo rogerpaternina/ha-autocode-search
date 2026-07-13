@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 
@@ -49,6 +49,9 @@ class SearchSession:
     current_manufacturer: str | None = None
     current_model: str | None = None
     finished_at: datetime | None = None
+    providers_used: list[str] = field(default_factory=list)
+    providers_completed: list[str] = field(default_factory=list)
+    duplicates_removed: int = 0
 
     def __post_init__(self) -> None:
         """Validate the immutable bounds of the session progress."""

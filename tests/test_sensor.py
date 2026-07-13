@@ -11,9 +11,11 @@ from custom_components.autocode_search.sensor import (
     AutocodeCurrentCommandSensor,
     AutocodeCurrentManufacturerSensor,
     AutocodeCurrentModelSensor,
+    AutocodeDuplicatesRemovedSensor,
     AutocodeElapsedTimeSensor,
     AutocodeFilterSummarySensor,
     AutocodeProgressSensor,
+    AutocodeProvidersUsedSensor,
     AutocodeTotalCodesSensor,
 )
 
@@ -48,6 +50,9 @@ def _create_sensor_environment() -> tuple[AutocodeSearchCoordinator, SimpleNames
         "search_rate": 0.5,
         "paused": False,
         "cancelled": False,
+        "providers_used": ["SmartIR", "IRDB"],
+        "providers_completed": ["SmartIR", "IRDB"],
+        "duplicates_removed": 54,
     }
     return coordinator, entry
 
@@ -95,3 +100,28 @@ def test_filter_summary_sensor_reflects_coordinator_data() -> None:
     sensor = AutocodeFilterSummarySensor(coordinator, entry)  # type: ignore[arg-type]
 
     assert sensor.native_value == "LG | TV | POWER"
+
+
+def test_providers_used_sensor_joins_provider_names() -> None:
+    """Providers used sensor exposes a comma-separated provider list."""
+    coordinator, entry = _create_sensor_environment()
+    sensor = AutocodeProvidersUsedSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "SmartIR, IRDB"
+
+
+def test_providers_used_sensor_without_providers_shows_none() -> None:
+    """Providers used sensor falls back to None when no providers ran."""
+    coordinator, entry = _create_sensor_environment()
+    coordinator.data["providers_used"] = []
+    sensor = AutocodeProvidersUsedSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "None"
+
+
+def test_duplicates_removed_sensor_reflects_coordinator_data() -> None:
+    """Duplicates removed sensor exposes the deduplication count."""
+    coordinator, entry = _create_sensor_environment()
+    sensor = AutocodeDuplicatesRemovedSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == 54

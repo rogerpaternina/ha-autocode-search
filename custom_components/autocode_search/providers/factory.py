@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from .base import CodeProvider
+from .composite import CompositeCodeProvider
 from .irdb import IRDBProvider
 from .lirc import LIRCProvider
 from .memory import InMemoryCodeProvider
@@ -17,6 +19,11 @@ type ProviderClass = (
     | type[LIRCProvider]
     | type[InMemoryCodeProvider]
 )
+
+# Priority order used when the composite provider is requested. Extend this
+# list (e.g. with "lirc") to include future providers without touching the
+# SearchEngine or the composite implementation.
+DEFAULT_COMPOSITE_ORDER: tuple[str, ...] = ("smartir", "irdb")
 
 
 class ProviderFactory:
@@ -36,11 +43,19 @@ class ProviderFactory:
         hass: HomeAssistant | None = None,
         *,
         codes: list[str] | None = None,
+        composite_order: Sequence[str] | None = None,
     ) -> CodeProvider:
         """Crear proveedor por nombre."""
+        name = provider_name.lower()
+
+        if name == "composite":
+            order = composite_order or DEFAULT_COMPOSITE_ORDER
+            return CompositeCodeProvider(
+                [cls.create(member, hass, codes=codes) for member in order]
+            )
 
         try:
-            provider_class = cls._PROVIDERS[provider_name.lower()]
+            provider_class = cls._PROVIDERS[name]
         except KeyError as err:
             raise ValueError(f"Unknown provider: {provider_name}") from err
 

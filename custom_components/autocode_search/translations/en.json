@@ -43,7 +43,9 @@
       "current_manufacturer": { "name": "Current manufacturer" },
       "current_model": { "name": "Current model" },
       "elapsed_time": { "name": "Elapsed time" },
-      "filter_summary": { "name": "Filter summary" }
+      "filter_summary": { "name": "Filter summary" },
+      "providers_used": { "name": "Providers used" },
+      "duplicates_removed": { "name": "Duplicates removed" }
     },
     "binary_sensor": {
       "running": { "name": "Running" }

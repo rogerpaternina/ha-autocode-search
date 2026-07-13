@@ -14,6 +14,9 @@ from custom_components.autocode_search.models.search_session import (
     SearchSession,
     SearchStatus,
 )
+from custom_components.autocode_search.providers.composite import (
+    CompositeCodeProvider,
+)
 from tests.test_search_engine import FakeAdapter, FakeProvider
 
 
@@ -120,6 +123,36 @@ def test_coordinator_publishes_filter_metadata() -> None:
     published = coordinator.async_set_updated_data.call_args_list[-1].args[0]
     assert published["filter_summary"] == "LG"
     assert published["codes_after_filter"] == 2
+
+
+def test_coordinator_publishes_composite_provider_statistics() -> None:
+    """Composite provider statistics are copied to the session and published."""
+    coordinator = _create_coordinator()
+    composite = CompositeCodeProvider(
+        [
+            FakeProvider([IRCode(name="power", payload="p-1", protocol="NEC")]),
+            FakeProvider(
+                [
+                    IRCode(name="power", payload="p-1", protocol="NEC"),
+                    IRCode(name="mute", payload="p-2", protocol="NEC"),
+                ]
+            ),
+        ]
+    )
+    adapter = FakeAdapter()
+    session = _create_session()
+
+    async def _run() -> None:
+        await coordinator.async_start_search(composite, adapter, session)
+
+    asyncio.run(_run())
+
+    assert session.providers_used == ["Fake", "Fake"]
+    assert session.duplicates_removed == 1
+    published = coordinator.async_set_updated_data.call_args_list[-1].args[0]
+    assert published["providers_used"] == ["Fake", "Fake"]
+    assert published["providers_completed"] == ["Fake", "Fake"]
+    assert published["duplicates_removed"] == 1
 
 
 def test_coordinator_finish_search_publishes_finished_state() -> None:

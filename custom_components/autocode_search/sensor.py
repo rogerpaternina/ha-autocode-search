@@ -36,6 +36,8 @@ async def async_setup_entry(
             AutocodeCurrentModelSensor(coordinator, entry),
             AutocodeElapsedTimeSensor(coordinator, entry),
             AutocodeFilterSummarySensor(coordinator, entry),
+            AutocodeProvidersUsedSensor(coordinator, entry),
+            AutocodeDuplicatesRemovedSensor(coordinator, entry),
         ]
     )
 
@@ -155,3 +157,28 @@ class AutocodeFilterSummarySensor(AutocodeSearchSensor):
     def native_value(self) -> str:
         """Return the active filter summary."""
         return self.coordinator.data["filter_summary"]
+
+
+class AutocodeProvidersUsedSensor(AutocodeSearchSensor):
+    """Expose the code providers used by the active search."""
+
+    _attr_translation_key = "providers_used"
+    _attr_unique_id = "autocode_providers_used"
+
+    @property
+    def native_value(self) -> str:
+        """Return the providers used, in priority order."""
+        providers = self.coordinator.data["providers_used"]
+        return ", ".join(providers) if providers else "None"
+
+
+class AutocodeDuplicatesRemovedSensor(AutocodeSearchSensor):
+    """Expose how many duplicate codes were removed across providers."""
+
+    _attr_translation_key = "duplicates_removed"
+    _attr_unique_id = "autocode_duplicates_removed"
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of removed duplicate codes."""
+        return self.coordinator.data["duplicates_removed"]

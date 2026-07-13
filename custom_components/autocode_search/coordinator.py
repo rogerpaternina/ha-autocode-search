@@ -17,6 +17,7 @@ from .engine import SearchEngine
 from .models import SearchSession, SearchStatus
 from .models.search_filter import SearchFilter
 from .providers.base import CodeProvider
+from .providers.composite import CompositeCodeProvider
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +43,9 @@ class AutocodeSearchData(TypedDict):
     search_rate: float | None
     paused: bool
     cancelled: bool
+    providers_used: list[str]
+    providers_completed: list[str]
+    duplicates_removed: int
 
 
 class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
@@ -88,6 +92,7 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         engine = SearchEngine(provider, adapter, session)
         _LOGGER.debug("Calling engine.start()")
         await engine.start(search_filter)
+        _sync_provider_statistics(provider, session)
         self.adapter = adapter
         self.search_session = session
         self.search_engine = engine
@@ -150,6 +155,9 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             search_rate=session.search_rate(),
             paused=session.paused,
             cancelled=session.cancelled,
+            providers_used=session.providers_used,
+            providers_completed=session.providers_completed,
+            duplicates_removed=session.duplicates_removed,
         )
 
     async def _async_get_adapter_status(self) -> dict[str, Any]:
@@ -172,3 +180,11 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         if self.search_engine is None:
             raise RuntimeError("No active Autocode Search session")
         return self.search_engine
+
+
+def _sync_provider_statistics(provider: CodeProvider, session: SearchSession) -> None:
+    """Copy multi-provider statistics into the session when available."""
+    if isinstance(provider, CompositeCodeProvider):
+        session.providers_used = list(provider.providers_used)
+        session.providers_completed = list(provider.providers_completed)
+        session.duplicates_removed = provider.duplicates_removed

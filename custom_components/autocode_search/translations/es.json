@@ -34,7 +34,9 @@
       "current_manufacturer": { "name": "Fabricante actual" },
       "current_model": { "name": "Modelo actual" },
       "elapsed_time": { "name": "Tiempo transcurrido" },
-      "filter_summary": { "name": "Resumen del filtro" }
+      "filter_summary": { "name": "Resumen del filtro" },
+      "providers_used": { "name": "Proveedores utilizados" },
+      "duplicates_removed": { "name": "Duplicados eliminados" }
     },
     "binary_sensor": {
       "running": { "name": "En ejecución" }
