@@ -10,7 +10,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..models.ir_code import IRCode
+from ..models.search_filter import SearchFilter
 from .base import CodeProvider
+from .filtering import filter_codes
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -25,50 +27,81 @@ class SmartIRProvider(CodeProvider):
         """Initialize the provider without touching the filesystem."""
         self._hass = hass
         self._cache: list[IRCode] | None = None
+        self._active_codes: list[IRCode] = []
         self._index = 0
 
-    async def load(self) -> None:
-        """Load SmartIR codes once and reset the cursor."""
+    async def load(self, search_filter: SearchFilter | None = None) -> None:
+        """Load SmartIR codes once and apply the optional search filter."""
         if self._cache is None:
             codes_path = self._codes_path()
             self._cache = await asyncio.to_thread(self._read_codes, codes_path)
+
+        self._apply_filter(search_filter)
         self.reset()
 
-    async def iter_codes(self) -> AsyncIterator[IRCode]:
-        """Yield all SmartIR codes, reusing the cached database after first load."""
-        await self.load()
-        assert self._cache is not None
-        for code in self._cache:
+    async def iter_codes(
+        self,
+        search_filter: SearchFilter | None = None,
+    ) -> AsyncIterator[IRCode]:
+        """Yield SmartIR codes that match the optional search filter."""
+        await self.load(search_filter)
+        for code in self._active_codes:
             _LOGGER.debug("Yielding %s", code.name)
             yield code
 
     def current(self) -> IRCode | None:
         """Return the current SmartIR code."""
-        if not self._cache:
+        if not self._active_codes:
             return None
-        return self._cache[self._index]
+        return self._active_codes[self._index]
 
     def next(self) -> IRCode | None:
         """Advance to and return the next SmartIR code."""
-        if not self._cache or self._index >= len(self._cache) - 1:
+        if not self._active_codes or self._index >= len(self._active_codes) - 1:
             return None
         self._index += 1
         return self.current()
 
     def previous(self) -> IRCode | None:
         """Move back to and return the previous SmartIR code."""
-        if not self._cache or self._index == 0:
+        if not self._active_codes or self._index == 0:
             return None
         self._index -= 1
         return self.current()
 
     def count(self) -> int:
-        """Return the number of SmartIR codes available."""
+        """Return the number of SmartIR codes available after filtering."""
+        return len(self._active_codes)
+
+    def unfiltered_count(self) -> int:
+        """Return the number of SmartIR codes before filtering."""
         return len(self._cache or ())
 
     def reset(self) -> None:
         """Reset the SmartIR cursor."""
         self._index = 0
+
+    def _apply_filter(self, search_filter: SearchFilter | None) -> None:
+        """Apply the search filter to the cached SmartIR codes."""
+        assert self._cache is not None
+        before_count = len(self._cache)
+
+        if search_filter is not None and search_filter.is_active():
+            _LOGGER.debug("Applying search filter")
+            if search_filter.manufacturer:
+                _LOGGER.debug("Manufacturer: %s", search_filter.manufacturer.upper())
+            if search_filter.device_type:
+                _LOGGER.debug("Device Type: %s", search_filter.device_type.upper())
+            if search_filter.command:
+                _LOGGER.debug("Command: %s", search_filter.command.upper())
+            if search_filter.model:
+                _LOGGER.debug("Model: %s", search_filter.model.upper())
+            _LOGGER.debug("SmartIR codes before filter: %s", before_count)
+
+        self._active_codes = filter_codes(self._cache, search_filter)
+
+        if search_filter is not None and search_filter.is_active():
+            _LOGGER.debug("SmartIR codes after filter: %s", len(self._active_codes))
 
     def _codes_path(self) -> Path:
         if self._hass is None:
@@ -121,7 +154,8 @@ class SmartIRProvider(CodeProvider):
             return None
 
         manufacturer = _optional_string(data.get("manufacturer"))
-        model = _first_model(data.get("supportedModels"))
+        supported_models = _supported_models(data.get("supportedModels"))
+        model = supported_models[0] if supported_models else None
         protocol = _optional_string(data.get("protocol"))
 
         return [
@@ -132,6 +166,7 @@ class SmartIRProvider(CodeProvider):
                 manufacturer=manufacturer,
                 model=model,
                 device_type=device_type,
+                supported_models=supported_models,
             )
             for name, payload in _iter_commands(commands)
         ]
@@ -158,7 +193,9 @@ def _optional_string(value: object) -> str | None:
     return value if isinstance(value, str) and value else None
 
 
-def _first_model(value: object) -> str | None:
-    if isinstance(value, list):
-        return next((model for model in value if isinstance(model, str)), None)
-    return _optional_string(value)
+def _supported_models(value: object) -> tuple[str, ...] | None:
+    if not isinstance(value, list):
+        return None
+
+    models = tuple(model for model in value if isinstance(model, str) and model)
+    return models or None

@@ -35,6 +35,7 @@ async def async_setup_entry(
             AutocodeCurrentManufacturerSensor(coordinator, entry),
             AutocodeCurrentModelSensor(coordinator, entry),
             AutocodeElapsedTimeSensor(coordinator, entry),
+            AutocodeFilterSummarySensor(coordinator, entry),
         ]
     )
 
@@ -92,8 +93,8 @@ class AutocodeTotalCodesSensor(AutocodeSearchSensor):
 
     @property
     def native_value(self) -> int:
-        """Return the total number of codes."""
-        return self.coordinator.data["codes_total"]
+        """Return the total number of codes in the active search."""
+        return self.coordinator.data["codes_after_filter"]
 
 
 class AutocodeCurrentCommandSensor(AutocodeSearchSensor):
@@ -142,3 +143,15 @@ class AutocodeElapsedTimeSensor(AutocodeSearchSensor):
     def native_value(self) -> str:
         """Return the formatted elapsed time."""
         return self.coordinator.data["elapsed_time"]
+
+
+class AutocodeFilterSummarySensor(AutocodeSearchSensor):
+    """Expose the active search filter as a compact summary."""
+
+    _attr_translation_key = "filter_summary"
+    _attr_unique_id = "autocode_filter_summary"
+
+    @property
+    def native_value(self) -> str:
+        """Return the active filter summary."""
+        return self.coordinator.data["filter_summary"]

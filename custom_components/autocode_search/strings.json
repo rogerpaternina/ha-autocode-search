@@ -132,7 +132,8 @@
       "current_command": { "name": "Current command" },
       "current_manufacturer": { "name": "Current manufacturer" },
       "current_model": { "name": "Current model" },
-      "elapsed_time": { "name": "Elapsed time" }
+      "elapsed_time": { "name": "Elapsed time" },
+      "filter_summary": { "name": "Filter summary" }
     },
     "binary_sensor": {
       "running": { "name": "Running" }

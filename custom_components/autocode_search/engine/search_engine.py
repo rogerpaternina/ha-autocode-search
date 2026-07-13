@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 
 from ..adapters.base import IRAdapter
 from ..models.ir_code import IRCode
+from ..models.search_filter import SearchFilter
 from ..models.search_session import SearchSession, SearchStatus
 from ..providers.base import CodeProvider
 
@@ -32,21 +33,36 @@ class SearchEngine:
         self.adapter = adapter
         self.session = session
         self._cancelled = False
+        self._search_filter: SearchFilter | None = None
 
-    async def start(self) -> None:
+    async def start(self, search_filter: SearchFilter | None = None) -> None:
         """Load codes and mark the search session as running."""
-        await self.provider.load()
+        self._search_filter = search_filter
+        async for _ in self.provider.iter_codes(search_filter):
+            pass
+        self.provider.reset()
+
         self._cancelled = False
-        self.session.total_codes = self.provider.count()
+        self.session.codes_total = self.provider.unfiltered_count()
+        self.session.codes_after_filter = self.provider.count()
+        self.session.total_codes = self.session.codes_after_filter
         self.session.current_index = 0
         self.session.codes_tested = 0
+        self.session.filter_description = (
+            search_filter.description()
+            if search_filter is not None and search_filter.is_active()
+            else "No filter"
+        )
+        self.session.filter_summary = (
+            search_filter.summary()
+            if search_filter is not None and search_filter.is_active()
+            else "No filter"
+        )
         self.session.status = SearchStatus.RUNNING
         self.session.started_at = _utcnow()
         self.session.finished_at = None
         self.session.last_update = _utcnow()
         _LOGGER.debug("Search started")
-
-        # TODO: Validate the selected device, brand, and command against the provider.
 
     async def send_current(self) -> str | None:
         """Send the provider's current code and return it when one exists."""
@@ -127,10 +143,10 @@ class SearchEngine:
         _LOGGER.debug("Search finished")
         # TODO: Persist or expose the completed search result.
 
-    async def run(self) -> None:
+    async def run(self, search_filter: SearchFilter | None = None) -> None:
         """Iterate through every code while honoring pause and cancel controls."""
         if self.session.status is SearchStatus.IDLE:
-            await self.start()
+            await self.start(search_filter)
 
         first_code = await self.send_current()
         if first_code is None:
@@ -169,7 +185,7 @@ class SearchEngine:
         _LOGGER.debug(
             "Progress %s/%s",
             self.session.codes_tested,
-            self.session.codes_total,
+            self.session.codes_after_filter,
         )
         self._log_current_code(code)
 

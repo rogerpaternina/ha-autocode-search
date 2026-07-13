@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from custom_components.autocode_search.models.ir_code import IRCode
+from custom_components.autocode_search.models.search_filter import SearchFilter
 from custom_components.autocode_search.providers.smartir import SmartIRProvider
 
 
@@ -107,6 +108,7 @@ def test_valid_json_generates_ir_codes(tmp_path: Path) -> None:
             manufacturer="Acme",
             model="TV-1",
             device_type="media_player",
+            supported_models=("TV-1", "TV-2"),
         ),
         IRCode(
             name="volumeUp",
@@ -114,6 +116,7 @@ def test_valid_json_generates_ir_codes(tmp_path: Path) -> None:
             manufacturer="Acme",
             model="TV-1",
             device_type="media_player",
+            supported_models=("TV-1", "TV-2"),
         ),
     ]
 
@@ -194,3 +197,81 @@ def test_iteration_yields_every_code(tmp_path: Path) -> None:
 
     assert len(codes) == 5
     assert provider.count() == 5
+
+
+def test_filter_by_manufacturer_is_case_insensitive(tmp_path: Path) -> None:
+    """Manufacturer filters return only matching SmartIR codes."""
+    _write_code_file(
+        tmp_path, "tv", "lg.json", {"power": "lg-power"}, manufacturer="LG"
+    )
+    _write_code_file(
+        tmp_path,
+        "tv",
+        "samsung.json",
+        {"power": "samsung-power"},
+        manufacturer="Samsung",
+    )
+    search_filter = SearchFilter(manufacturer=" lg ")
+
+    provider = _provider(tmp_path)
+    codes = asyncio.run(_collect(provider.iter_codes(search_filter)))
+
+    assert [code.payload for code in codes] == ["lg-power"]
+    assert provider.unfiltered_count() == 2
+    assert provider.count() == 1
+
+
+def test_filter_by_device_type_command_and_model(tmp_path: Path) -> None:
+    """Combined filters narrow SmartIR results to exact matches."""
+    _write_code_file(
+        tmp_path,
+        "tv",
+        "lg.json",
+        {"power": "lg-power", "volume_up": "lg-volume"},
+        manufacturer="LG",
+        models=["OLED55", "OLED65"],
+    )
+    _write_code_file(
+        tmp_path,
+        "fan",
+        "lg.json",
+        {"power": "fan-power"},
+        manufacturer="LG",
+        models=["FAN-1"],
+    )
+    search_filter = SearchFilter(
+        manufacturer="LG",
+        device_type="tv",
+        command="power",
+        model="oled65",
+    )
+
+    provider = _provider(tmp_path)
+    codes = asyncio.run(_collect(provider.iter_codes(search_filter)))
+
+    assert codes == [
+        IRCode(
+            name="power",
+            payload="lg-power",
+            manufacturer="LG",
+            model="OLED55",
+            device_type="tv",
+            supported_models=("OLED55", "OLED65"),
+        )
+    ]
+    assert provider.unfiltered_count() == 3
+
+
+def test_filter_without_results_returns_empty_provider(tmp_path: Path) -> None:
+    """A filter with no matches yields an empty active search."""
+    _write_code_file(
+        tmp_path, "tv", "lg.json", {"power": "lg-power"}, manufacturer="LG"
+    )
+    search_filter = SearchFilter(manufacturer="Sony")
+
+    provider = _provider(tmp_path)
+    codes = asyncio.run(_collect(provider.iter_codes(search_filter)))
+
+    assert codes == []
+    assert provider.count() == 0
+    assert provider.unfiltered_count() == 1

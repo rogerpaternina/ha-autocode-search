@@ -13,3 +13,4 @@ class IRCode:
     manufacturer: str | None = None
     model: str | None = None
     device_type: str | None = None
+    supported_models: tuple[str, ...] | None = None

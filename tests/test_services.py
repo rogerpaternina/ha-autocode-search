@@ -95,6 +95,7 @@ def test_start_search_publishes_session_updates() -> None:
         command="power",
         current_index=0,
         total_codes=1,
+        codes_after_filter=1,
         status=SearchStatus.RUNNING,
         started_at=now,
         last_update=now,
@@ -112,6 +113,7 @@ def test_start_search_publishes_session_updates() -> None:
         "device_type": "tv",
         "brand": "lg",
         "command": "power",
+        "manufacturer": "LG",
     }
 
     with (
@@ -119,7 +121,7 @@ def test_start_search_publishes_session_updates() -> None:
             coordinator,
             "async_start_search",
             AsyncMock(return_value=engine),
-        ),
+        ) as start_search,
         patch(
             "custom_components.autocode_search.services.HomeAssistantRemoteAdapter",
             return_value=SimpleNamespace(),
@@ -127,4 +129,26 @@ def test_start_search_publishes_session_updates() -> None:
     ):
         asyncio.run(services._async_start_search(hass, call))
 
+    start_search.assert_awaited_once()
+    assert start_search.await_args.args[3].summary() == "LG | TV | POWER"
     assert coordinator.async_publish_session.await_count >= 1
+
+
+def test_build_search_filter_from_service_fields() -> None:
+    """Service fields are converted into a provider search filter."""
+    search_filter = services._build_search_filter(
+        {
+            "manufacturer": "LG",
+            "device_type": "tv",
+            "command": "power",
+            "model": "OLED55",
+        }
+    )
+
+    assert search_filter is not None
+    assert search_filter.summary() == "LG | TV | POWER | OLED55"
+
+
+def test_build_search_filter_returns_none_without_criteria() -> None:
+    """Absent filter fields do not create a search filter."""
+    assert services._build_search_filter({}) is None

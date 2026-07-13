@@ -41,6 +41,10 @@ class SearchSession:
     started_at: datetime | None
     last_update: datetime
     codes_tested: int = 0
+    codes_total: int = 0
+    codes_after_filter: int = 0
+    filter_description: str = "No filter"
+    filter_summary: str = "No filter"
     current_code: str | None = None
     current_manufacturer: str | None = None
     current_model: str | None = None
@@ -52,21 +56,16 @@ class SearchSession:
             raise ValueError("total_codes cannot be negative")
         if not 0 <= self.current_index <= self.total_codes:
             raise ValueError("current_index must be between zero and total_codes")
-        if not 0 <= self.codes_tested <= self.total_codes:
-            raise ValueError("codes_tested must be between zero and total_codes")
-
-    @property
-    def codes_total(self) -> int:
-        """Return the total number of codes in the search."""
-        return self.total_codes
+        if not 0 <= self.codes_tested <= self.codes_after_filter:
+            raise ValueError("codes_tested must be between zero and codes_after_filter")
 
     @property
     def progress(self) -> float:
         """Return completed progress as a fraction between 0.0 and 1.0."""
-        if self.codes_total <= 0:
+        if self.codes_after_filter <= 0:
             return 0.0
 
-        return min(self.codes_tested / self.codes_total, 1.0)
+        return min(self.codes_tested / self.codes_after_filter, 1.0)
 
     @property
     def paused(self) -> bool:
@@ -131,7 +130,7 @@ class SearchSession:
             )
 
         self.current_index = self.total_codes
-        self.codes_tested = self.total_codes
+        self.codes_tested = self.codes_after_filter
         self.status = SearchStatus.FINISHED
         self.finished_at = _utcnow()
         self.last_update = _utcnow()

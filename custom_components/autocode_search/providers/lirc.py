@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from ..models.ir_code import IRCode
+from ..models.search_filter import SearchFilter
 from .base import CodeProvider
 
 
 class LIRCProvider(CodeProvider):
     """Provide a future cursor over LIRC infrared codes."""
 
-    async def load(self) -> None:
+    async def load(self, search_filter: SearchFilter | None = None) -> None:
         """Load LIRC codes for the requested device and command."""
         # TODO: Load and normalize LIRC code definitions.
         raise NotImplementedError("LIRC provider has not been implemented")

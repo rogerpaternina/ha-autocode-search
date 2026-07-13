@@ -10,8 +10,9 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from .adapters.home_assistant_remote import HomeAssistantRemoteAdapter
-from .const import CONF_PROVIDER, DOMAIN
+from .const import CONF_PROVIDER, DEFAULT_PROVIDER, DOMAIN
 from .models import SearchSession, SearchStatus
+from .models.search_filter import SearchFilter
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant, ServiceCall
@@ -72,6 +73,8 @@ async def async_unload_services(hass: HomeAssistant) -> None:
 
 async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
     """Create and start a new infrared-code search."""
+    from .providers.base import CodeProvider
+    from .providers.factory import ProviderFactory
     from .providers.memory import InMemoryCodeProvider
 
     coordinator = _get_coordinator(hass)
@@ -79,7 +82,8 @@ async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
 
     try:
         entity_id = _required_string(call.data, "entity_id")
-        codes = _required_codes(call.data)
+        search_filter = _build_search_filter(call.data)
+        codes = _optional_codes(call.data)
         now = datetime.now(UTC)
         _LOGGER.debug("Creating SearchSession")
         session = SearchSession(
@@ -94,11 +98,22 @@ async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
             last_update=now,
         )
         _LOGGER.debug("Creating provider")
-        provider = InMemoryCodeProvider(codes)
+        provider: CodeProvider
+        if codes is not None:
+            provider = InMemoryCodeProvider(codes)
+        else:
+            provider_name = coordinator.configuration.get(
+                CONF_PROVIDER, DEFAULT_PROVIDER
+            )
+            if provider_name == "auto":
+                provider_name = "smartir"
+            provider = ProviderFactory.create(provider_name, hass)
         _LOGGER.debug("Creating adapter")
         adapter = HomeAssistantRemoteAdapter(hass, entity_id)
         validation_complete = True
-        engine = await coordinator.async_start_search(provider, adapter, session)
+        engine = await coordinator.async_start_search(
+            provider, adapter, session, search_filter
+        )
         _LOGGER.debug("Calling send_current()")
         _LOGGER.debug("Calling remote.send_command()")
         first_code = await engine.send_current()
@@ -221,6 +236,19 @@ def _get_engine(coordinator: AutocodeSearchCoordinator):
     return engine
 
 
+def _build_search_filter(data: Mapping[str, Any]) -> SearchFilter | None:
+    """Build a search filter from optional service fields."""
+    search_filter = SearchFilter(
+        manufacturer=_optional_filter_string(data, "manufacturer"),
+        model=_optional_filter_string(data, "model"),
+        device_type=_optional_filter_string(data, "device_type"),
+        command=_optional_filter_string(data, "command"),
+    )
+    if not search_filter.is_active():
+        return None
+    return search_filter
+
+
 def _required_string(data: Mapping[str, Any], key: str) -> str:
     """Return a non-empty string service field or raise a service error."""
     value = data.get(key)
@@ -237,11 +265,23 @@ def _optional_string(data: Mapping[str, Any], key: str) -> str:
     return value
 
 
-def _required_codes(data: Mapping[str, Any]) -> list[str]:
-    """Return a non-empty list of infrared-code strings or raise an error."""
+def _optional_filter_string(data: Mapping[str, Any], key: str) -> str | None:
+    """Return an optional filter field or ``None`` when it is absent."""
+    value = data.get(key)
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str):
+        raise _service_error(f"Service field '{key}' must be a string")
+    return value
+
+
+def _optional_codes(data: Mapping[str, Any]) -> list[str] | None:
+    """Return an optional list of infrared-code strings."""
     codes = data.get("codes")
+    if codes is None:
+        return None
     if not isinstance(codes, list) or not codes:
-        raise _service_error("Service field 'codes' must be a non-empty list")
+        raise _service_error("Service field 'codes' must be a non-empty list when set")
     if not all(isinstance(code, str) and code for code in codes):
         raise _service_error("Every code must be a non-empty string")
     return codes

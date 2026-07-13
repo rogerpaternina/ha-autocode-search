@@ -8,11 +8,20 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from custom_components.autocode_search.coordinator import AutocodeSearchCoordinator
+from custom_components.autocode_search.models.ir_code import IRCode
+from custom_components.autocode_search.models.search_filter import SearchFilter
 from custom_components.autocode_search.models.search_session import (
     SearchSession,
     SearchStatus,
 )
 from tests.test_search_engine import FakeAdapter, FakeProvider
+
+
+def _provider_codes(count: int) -> list[IRCode]:
+    return [
+        IRCode(name=f"code-{index}", payload=f"code-{index}")
+        for index in range(1, count + 1)
+    ]
 
 
 def _create_coordinator() -> AutocodeSearchCoordinator:
@@ -48,7 +57,7 @@ def _create_session() -> SearchSession:
 def test_async_publish_session_updates_coordinator_data() -> None:
     """Coordinator publishes session progress to listeners."""
     coordinator = _create_coordinator()
-    provider = FakeProvider(["code-1", "code-2"])
+    provider = FakeProvider(_provider_codes(2))
     adapter = FakeAdapter()
     session = _create_session()
 
@@ -62,6 +71,7 @@ def test_async_publish_session_updates_coordinator_data() -> None:
     data = coordinator.async_set_updated_data.call_args_list[-1].args[0]
     assert data["search_status"] == SearchStatus.RUNNING.value
     assert data["codes_total"] == 2
+    assert data["codes_after_filter"] == 2
     assert data["codes_tested"] == 0
     assert data["progress"] == 0.0
 
@@ -69,7 +79,7 @@ def test_async_publish_session_updates_coordinator_data() -> None:
 def test_coordinator_pause_resume_and_cancel_delegate_to_engine() -> None:
     """Coordinator control methods update the active session state."""
     coordinator = _create_coordinator()
-    provider = FakeProvider(["code-1", "code-2", "code-3"])
+    provider = FakeProvider(_provider_codes(3))
     adapter = FakeAdapter()
     session = _create_session()
 
@@ -89,10 +99,33 @@ def test_coordinator_pause_resume_and_cancel_delegate_to_engine() -> None:
     assert published["paused"] is False
 
 
+def test_coordinator_publishes_filter_metadata() -> None:
+    """Coordinator publishes filter statistics from the active session."""
+    coordinator = _create_coordinator()
+    provider = FakeProvider(
+        [
+            IRCode(name="code-1", payload="code-1", manufacturer="LG"),
+            IRCode(name="code-2", payload="code-2", manufacturer="LG"),
+        ]
+    )
+    adapter = FakeAdapter()
+    session = _create_session()
+    search_filter = SearchFilter(manufacturer="LG")
+
+    async def _run() -> None:
+        await coordinator.async_start_search(provider, adapter, session, search_filter)
+
+    asyncio.run(_run())
+
+    published = coordinator.async_set_updated_data.call_args_list[-1].args[0]
+    assert published["filter_summary"] == "LG"
+    assert published["codes_after_filter"] == 2
+
+
 def test_coordinator_finish_search_publishes_finished_state() -> None:
     """Finishing through the coordinator exposes a finished session."""
     coordinator = _create_coordinator()
-    provider = FakeProvider(["code-1"])
+    provider = FakeProvider(_provider_codes(1))
     adapter = FakeAdapter()
     session = _create_session()
 

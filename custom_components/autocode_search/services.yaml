@@ -1,6 +1,6 @@
 start_search:
   name: Start search
-  description: Start a search and send the first explicitly supplied infrared code.
+  description: Start a search and send the first infrared code from the provider or supplied list.
   fields:
     entity_id:
       name: Remote entity
@@ -11,14 +11,23 @@ start_search:
           domain: remote
     codes:
       name: Infrared codes
-      description: Ordered list of infrared codes to test.
-      required: true
+      description: Optional ordered list of infrared codes to test. When omitted, the configured provider is used.
       example: ["JgBQAAAB"]
       selector:
         object:
+    manufacturer:
+      name: Manufacturer
+      description: Optional manufacturer filter applied by the code provider.
+      selector:
+        text:
+    model:
+      name: Model
+      description: Optional model filter applied by the code provider.
+      selector:
+        text:
     device_type:
       name: Device type
-      description: Optional device type recorded in the search session.
+      description: Optional device type filter and session metadata.
       selector:
         text:
     brand:
@@ -28,7 +37,7 @@ start_search:
         text:
     command:
       name: Command
-      description: Optional command recorded in the search session.
+      description: Optional command filter and session metadata.
       selector:
         text:
 

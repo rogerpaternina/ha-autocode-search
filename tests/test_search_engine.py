@@ -10,45 +10,41 @@ import pytest
 from custom_components.autocode_search.adapters.base import IRAdapter
 from custom_components.autocode_search.engine.search_engine import SearchEngine
 from custom_components.autocode_search.models.ir_code import IRCode
+from custom_components.autocode_search.models.search_filter import SearchFilter
 from custom_components.autocode_search.models.search_session import (
     InvalidStateTransitionError,
     SearchSession,
     SearchStatus,
 )
 from custom_components.autocode_search.providers.base import CodeProvider
+from custom_components.autocode_search.providers.filtering import filter_codes
 
 
 class FakeProvider(CodeProvider):
     """Provide deterministic in-memory codes for engine tests."""
 
-    def __init__(self, codes: list[str]) -> None:
+    def __init__(self, codes: list[IRCode]) -> None:
         """Initialize the provider with a sequence of codes."""
-        self._codes = [
-            IRCode(
-                name=code,
-                payload=code,
-                manufacturer="LG",
-                model=f"model-{code}",
-            )
-            for code in codes
-        ]
+        self._all_codes = codes
+        self._active_codes: list[IRCode] = []
         self._index = 0
         self.loaded = False
 
-    async def load(self) -> None:
-        """Mark the provider as loaded and reset its cursor."""
+    async def load(self, search_filter: SearchFilter | None = None) -> None:
+        """Mark the provider as loaded and apply the optional filter."""
         self.loaded = True
+        self._active_codes = filter_codes(self._all_codes, search_filter)
         self.reset()
 
     def current(self) -> IRCode | None:
         """Return the code at the current cursor position."""
-        if not self.loaded or not self._codes:
+        if not self.loaded or not self._active_codes:
             return None
-        return self._codes[self._index]
+        return self._active_codes[self._index]
 
     def next(self) -> IRCode | None:
         """Advance the cursor and return the next code."""
-        if not self.loaded or self._index >= len(self._codes) - 1:
+        if not self.loaded or self._index >= len(self._active_codes) - 1:
             return None
         self._index += 1
         return self.current()
@@ -61,8 +57,12 @@ class FakeProvider(CodeProvider):
         return self.current()
 
     def count(self) -> int:
-        """Return the number of test codes."""
-        return len(self._codes)
+        """Return the number of active test codes."""
+        return len(self._active_codes)
+
+    def unfiltered_count(self) -> int:
+        """Return the number of test codes before filtering."""
+        return len(self._all_codes)
 
     def reset(self) -> None:
         """Reset the cursor to the first test code."""
@@ -103,7 +103,20 @@ def _create_engine() -> tuple[SearchEngine, FakeProvider, FakeAdapter, SearchSes
         started_at=None,
         last_update=now,
     )
-    provider = FakeProvider(["code-1", "code-2", "code-3"])
+    provider = FakeProvider(
+        [
+            IRCode(name="power", payload="code-1", manufacturer="LG", device_type="tv"),
+            IRCode(
+                name="power",
+                payload="code-2",
+                manufacturer="Samsung",
+                device_type="tv",
+            ),
+            IRCode(
+                name="volume", payload="code-3", manufacturer="LG", device_type="tv"
+            ),
+        ]
+    )
     adapter = FakeAdapter()
     return SearchEngine(provider, adapter, session), provider, adapter, session
 
@@ -118,6 +131,8 @@ def test_start_loads_provider_and_starts_session() -> None:
     assert session.status is SearchStatus.RUNNING
     assert session.current_index == 0
     assert session.total_codes == 3
+    assert session.codes_total == 3
+    assert session.codes_after_filter == 3
     assert session.codes_tested == 0
     assert session.started_at is not None
 
@@ -132,7 +147,7 @@ def test_send_current_updates_progress_and_metadata() -> None:
     assert sent_code == "code-1"
     assert adapter.sent_codes == ["code-1"]
     assert session.codes_tested == 1
-    assert session.current_code == "code-1"
+    assert session.current_code == "power"
     assert session.current_manufacturer == "LG"
     assert session.progress == pytest.approx(1 / 3)
 
@@ -243,6 +258,19 @@ def test_run_respects_cancel() -> None:
 
     assert session.status is SearchStatus.CANCELLED
     assert adapter.sent_codes == ["code-1"]
+
+
+def test_start_applies_search_filter_statistics() -> None:
+    """Starting a search records unfiltered and filtered code totals."""
+    engine, _, _, session = _create_engine()
+    search_filter = SearchFilter(manufacturer="LG", command="power")
+
+    asyncio.run(engine.start(search_filter))
+
+    assert session.codes_total == 3
+    assert session.codes_after_filter == 1
+    assert session.total_codes == 1
+    assert session.filter_summary == "LG | POWER"
 
 
 def test_pause_from_idle_raises() -> None:

@@ -15,6 +15,7 @@ from .adapters.base import IRAdapter
 from .const import DOMAIN
 from .engine import SearchEngine
 from .models import SearchSession, SearchStatus
+from .models.search_filter import SearchFilter
 from .providers.base import CodeProvider
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,6 +31,9 @@ class AutocodeSearchData(TypedDict):
     search_status: str
     codes_tested: int
     codes_total: int
+    codes_after_filter: int
+    filter_description: str
+    filter_summary: str
     progress: float
     current_code: str | None
     current_manufacturer: str | None
@@ -77,12 +81,13 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         provider: CodeProvider,
         adapter: IRAdapter,
         session: SearchSession,
+        search_filter: SearchFilter | None = None,
     ) -> SearchEngine:
         """Create, start, and retain the search engine for a new session."""
         _LOGGER.debug("Creating SearchEngine")
         engine = SearchEngine(provider, adapter, session)
         _LOGGER.debug("Calling engine.start()")
-        await engine.start()
+        await engine.start(search_filter)
         self.adapter = adapter
         self.search_session = session
         self.search_engine = engine
@@ -134,6 +139,9 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             search_status=session.status.value,
             codes_tested=session.codes_tested,
             codes_total=session.codes_total,
+            codes_after_filter=session.codes_after_filter,
+            filter_description=session.filter_description,
+            filter_summary=session.filter_summary,
             progress=session.progress,
             current_code=session.current_code,
             current_manufacturer=session.current_manufacturer,

@@ -12,6 +12,7 @@ from custom_components.autocode_search.sensor import (
     AutocodeCurrentManufacturerSensor,
     AutocodeCurrentModelSensor,
     AutocodeElapsedTimeSensor,
+    AutocodeFilterSummarySensor,
     AutocodeProgressSensor,
     AutocodeTotalCodesSensor,
 )
@@ -36,6 +37,9 @@ def _create_sensor_environment() -> tuple[AutocodeSearchCoordinator, SimpleNames
         "search_status": "running",
         "codes_tested": 150,
         "codes_total": 2500,
+        "codes_after_filter": 124,
+        "filter_description": "Manufacturer: LG\nCommand: POWER",
+        "filter_summary": "LG | TV | POWER",
         "progress": 0.06,
         "current_code": "power",
         "current_manufacturer": "LG",
@@ -61,7 +65,7 @@ def test_codes_tested_and_total_sensors_reflect_coordinator_data() -> None:
     coordinator, entry = _create_sensor_environment()
 
     assert AutocodeCodesTestedSensor(coordinator, entry).native_value == 150  # type: ignore[arg-type]
-    assert AutocodeTotalCodesSensor(coordinator, entry).native_value == 2500  # type: ignore[arg-type]
+    assert AutocodeTotalCodesSensor(coordinator, entry).native_value == 124  # type: ignore[arg-type]
 
 
 def test_current_metadata_sensors_reflect_coordinator_data() -> None:
@@ -82,3 +86,12 @@ def test_elapsed_time_sensor_reflects_coordinator_data() -> None:
     coordinator, entry = _create_sensor_environment()
 
     assert AutocodeElapsedTimeSensor(coordinator, entry).native_value == "00:04:58"  # type: ignore[arg-type]
+
+
+def test_filter_summary_sensor_reflects_coordinator_data() -> None:
+    """Filter summary sensor exposes the active search filter."""
+    coordinator, entry = _create_sensor_environment()
+
+    sensor = AutocodeFilterSummarySensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "LG | TV | POWER"

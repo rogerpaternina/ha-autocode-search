@@ -24,6 +24,7 @@ def _create_session(**overrides: object) -> SearchSession:
         "command": "power",
         "current_index": 0,
         "total_codes": 10,
+        "codes_after_filter": 10,
         "status": SearchStatus.RUNNING,
         "started_at": now,
         "last_update": now,
@@ -32,9 +33,9 @@ def _create_session(**overrides: object) -> SearchSession:
     return SearchSession(**data)  # type: ignore[arg-type]
 
 
-def test_progress_is_calculated_from_codes_tested() -> None:
-    """Progress reflects tested codes over the total."""
-    session = _create_session(codes_tested=0)
+def test_progress_is_calculated_from_codes_after_filter() -> None:
+    """Progress reflects tested codes over the filtered total."""
+    session = _create_session(codes_tested=0, codes_after_filter=10)
     assert session.progress == 0.0
 
     session.codes_tested = 5
@@ -84,7 +85,7 @@ def test_cancel_marks_session_as_cancelled() -> None:
 
 def test_finish_sets_progress_to_total() -> None:
     """Finishing a search marks every code as tested."""
-    session = _create_session(codes_tested=4, current_index=4)
+    session = _create_session(codes_tested=4, current_index=4, codes_after_filter=10)
 
     session.finish()
 
@@ -133,6 +134,7 @@ def test_search_rate_uses_tested_codes_and_elapsed_time() -> None:
         finished_at=finished_at,
         codes_tested=10,
         total_codes=10,
+        codes_after_filter=10,
         status=SearchStatus.FINISHED,
     )
 
