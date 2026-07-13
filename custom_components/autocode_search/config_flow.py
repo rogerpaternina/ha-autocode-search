@@ -233,9 +233,7 @@ class AutocodeSearchOptionsFlow(
 
         return self.async_show_form(
             step_id="remote",
-            data_schema=self._remote_schema(
-                self._current_value(CONF_ENTITY_ID)
-            ),
+            data_schema=self._remote_schema(self._current_value(CONF_ENTITY_ID)),
             errors=errors,
         )
 

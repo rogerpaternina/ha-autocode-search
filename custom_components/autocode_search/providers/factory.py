@@ -8,9 +8,7 @@ from .lirc import LIRCProvider
 from .smartir import SmartIRProvider
 
 ProviderClass: TypeAlias = (
-    type[SmartIRProvider]
-    | type[IRDBProvider]
-    | type[LIRCProvider]
+    type[SmartIRProvider] | type[IRDBProvider] | type[LIRCProvider]
 )
 
 
