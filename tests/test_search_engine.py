@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 
 from custom_components.autocode_search.adapters.base import IRAdapter
 from custom_components.autocode_search.engine.search_engine import SearchEngine
+from custom_components.autocode_search.models.ir_code import IRCode
 from custom_components.autocode_search.models.search_session import (
     SearchSession,
     SearchStatus,
@@ -19,7 +20,7 @@ class FakeProvider(CodeProvider):
 
     def __init__(self, codes: list[str]) -> None:
         """Initialize the provider with a sequence of codes."""
-        self._codes = codes
+        self._codes = [IRCode(name=code, payload=code) for code in codes]
         self._index = 0
         self.loaded = False
 
@@ -28,20 +29,20 @@ class FakeProvider(CodeProvider):
         self.loaded = True
         self.reset()
 
-    def current(self) -> str | None:
+    def current(self) -> IRCode | None:
         """Return the code at the current cursor position."""
         if not self.loaded or not self._codes:
             return None
         return self._codes[self._index]
 
-    def next(self) -> str | None:
+    def next(self) -> IRCode | None:
         """Advance the cursor and return the next code."""
         if not self.loaded or self._index >= len(self._codes) - 1:
             return None
         self._index += 1
         return self.current()
 
-    def previous(self) -> str | None:
+    def previous(self) -> IRCode | None:
         """Move the cursor back and return the previous code."""
         if not self.loaded or self._index == 0:
             return None

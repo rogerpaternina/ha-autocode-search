@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .base import CodeProvider
 from .irdb import IRDBProvider
 from .lirc import LIRCProvider
 from .smartir import SmartIRProvider
 
-type ProviderClass = (type[SmartIRProvider] | type[IRDBProvider] | type[LIRCProvider])
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
+type ProviderClass = type[SmartIRProvider] | type[IRDBProvider] | type[LIRCProvider]
 
 
 class ProviderFactory:
@@ -18,7 +23,9 @@ class ProviderFactory:
     }
 
     @classmethod
-    def create(cls, provider_name: str) -> CodeProvider:
+    def create(
+        cls, provider_name: str, hass: HomeAssistant | None = None
+    ) -> CodeProvider:
         """Crear proveedor por nombre."""
 
         try:
@@ -26,4 +33,6 @@ class ProviderFactory:
         except KeyError as err:
             raise ValueError(f"Unknown provider: {provider_name}") from err
 
+        if provider_class is SmartIRProvider:
+            return SmartIRProvider(hass)
         return provider_class()

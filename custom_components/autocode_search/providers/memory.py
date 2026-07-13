@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..models.ir_code import IRCode
 from .base import CodeProvider
 
 
@@ -10,7 +11,7 @@ class InMemoryCodeProvider(CodeProvider):
 
     def __init__(self, codes: list[str]) -> None:
         """Initialize the provider with codes in their search order."""
-        self._codes = codes
+        self._codes = [IRCode(name=code, payload=code) for code in codes]
         self._index = 0
         self._loaded = False
 
@@ -19,20 +20,20 @@ class InMemoryCodeProvider(CodeProvider):
         self._loaded = True
         self.reset()
 
-    def current(self) -> str | None:
+    def current(self) -> IRCode | None:
         """Return the code at the current cursor position."""
         if not self._loaded or not self._codes:
             return None
         return self._codes[self._index]
 
-    def next(self) -> str | None:
+    def next(self) -> IRCode | None:
         """Advance the cursor and return the next code, if available."""
         if not self._loaded or self._index >= len(self._codes) - 1:
             return None
         self._index += 1
         return self.current()
 
-    def previous(self) -> str | None:
+    def previous(self) -> IRCode | None:
         """Move the cursor back and return the previous code, if available."""
         if not self._loaded or self._index == 0:
             return None

@@ -43,8 +43,8 @@ class SearchEngine:
         if code is None:
             return None
 
-        await self.adapter.send_code(code)
-        return code
+        await self.adapter.send_code(code.payload)
+        return code.payload
 
     async def next(self) -> str | None:
         """Advance to, send, and return the next available code."""
@@ -52,9 +52,9 @@ class SearchEngine:
         if code is None:
             return None
 
-        await self.adapter.send_code(code)
+        await self.adapter.send_code(code.payload)
         self.session.next()
-        return code
+        return code.payload
 
     async def previous(self) -> str | None:
         """Move back to, send, and return the previous available code."""
@@ -62,9 +62,9 @@ class SearchEngine:
         if code is None:
             return None
 
-        await self.adapter.send_code(code)
+        await self.adapter.send_code(code.payload)
         self.session.previous()
-        return code
+        return code.payload
 
     async def finish(self) -> None:
         """Mark the current search session as finished."""

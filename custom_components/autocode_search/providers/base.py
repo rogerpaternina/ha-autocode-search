@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+
+from ..models.ir_code import IRCode
 
 
 class CodeProvider(ABC):
@@ -17,15 +20,15 @@ class CodeProvider(ABC):
         """Load the codes made available by this provider."""
 
     @abstractmethod
-    def current(self) -> str | None:
+    def current(self) -> IRCode | None:
         """Return the current code, or ``None`` when there is no current code."""
 
     @abstractmethod
-    def next(self) -> str | None:
+    def next(self) -> IRCode | None:
         """Advance the cursor and return the next code, if available."""
 
     @abstractmethod
-    def previous(self) -> str | None:
+    def previous(self) -> IRCode | None:
         """Move the cursor back and return the previous code, if available."""
 
     @abstractmethod
@@ -35,3 +38,11 @@ class CodeProvider(ABC):
     @abstractmethod
     def reset(self) -> None:
         """Reset the provider cursor to its initial position."""
+
+    async def iter_codes(self) -> AsyncIterator[IRCode]:
+        """Yield every available code in provider order."""
+        await self.load()
+        code = self.current()
+        while code is not None:
+            yield code
+            code = self.next()

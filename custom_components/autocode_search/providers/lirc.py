@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..models.ir_code import IRCode
 from .base import CodeProvider
 
 
@@ -13,17 +14,17 @@ class LIRCProvider(CodeProvider):
         # TODO: Load and normalize LIRC code definitions.
         raise NotImplementedError("LIRC provider has not been implemented")
 
-    def current(self) -> str | None:
+    def current(self) -> IRCode | None:
         """Return the current LIRC code."""
         # TODO: Return the code at the current LIRC cursor position.
         raise NotImplementedError("LIRC provider has not been implemented")
 
-    def next(self) -> str | None:
+    def next(self) -> IRCode | None:
         """Advance to and return the next LIRC code."""
         # TODO: Advance the LIRC cursor.
         raise NotImplementedError("LIRC provider has not been implemented")
 
-    def previous(self) -> str | None:
+    def previous(self) -> IRCode | None:
         """Move back to and return the previous LIRC code."""
         # TODO: Move the LIRC cursor back one position.
         raise NotImplementedError("LIRC provider has not been implemented")
