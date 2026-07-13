@@ -1,15 +1,23 @@
 from __future__ import annotations
 
+from typing import TypeAlias
+
 from .base import CodeProvider
-from .smartir import SmartIRProvider
 from .irdb import IRDBProvider
 from .lirc import LIRCProvider
+from .smartir import SmartIRProvider
+
+ProviderClass: TypeAlias = (
+    type[SmartIRProvider]
+    | type[IRDBProvider]
+    | type[LIRCProvider]
+)
 
 
 class ProviderFactory:
     """Factory para crear proveedores IR."""
 
-    _PROVIDERS = {
+    _PROVIDERS: dict[str, ProviderClass] = {
         "smartir": SmartIRProvider,
         "irdb": IRDBProvider,
         "lirc": LIRCProvider,
@@ -20,8 +28,8 @@ class ProviderFactory:
         """Crear proveedor por nombre."""
 
         try:
-            provider = cls._PROVIDERS[provider_name.lower()]
+            provider_class = cls._PROVIDERS[provider_name.lower()]
         except KeyError as err:
             raise ValueError(f"Unknown provider: {provider_name}") from err
 
-        return provider()
+        return provider_class()

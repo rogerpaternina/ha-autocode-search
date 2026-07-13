@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import voluptuous as vol
 
@@ -83,7 +83,9 @@ class _AutocodeSearchFlowMixin:
 
 
 class AutocodeSearchConfigFlow(
-    _AutocodeSearchFlowMixin, config_entries.ConfigFlow, domain=DOMAIN
+    _AutocodeSearchFlowMixin,
+    config_entries.ConfigFlow,
+    domain=DOMAIN,  # type: ignore[call-arg]
 ):
     """Handle the UI configuration flow for Autocode Search."""
 
@@ -112,16 +114,20 @@ class AutocodeSearchConfigFlow(
         errors: dict[str, str] = {}
         if user_input is not None:
             entity_id = user_input.get(CONF_ENTITY_ID)
+
             if not self._is_valid_remote(entity_id):
                 errors[CONF_ENTITY_ID] = "invalid_remote"
             else:
+                entity_id = cast(str, entity_id)
                 self._data[CONF_ENTITY_ID] = entity_id
                 await self.async_set_unique_id(entity_id)
                 self._abort_if_unique_id_configured()
                 return await self.async_step_device_type()
 
         return self.async_show_form(
-            step_id="user", data_schema=self._remote_schema(), errors=errors
+            step_id="user",
+            data_schema=self._remote_schema(),
+            errors=errors,
         )
 
     async def async_step_device_type(
@@ -217,15 +223,19 @@ class AutocodeSearchOptionsFlow(
         errors: dict[str, str] = {}
         if user_input is not None:
             entity_id = user_input.get(CONF_ENTITY_ID)
+
             if not self._is_valid_remote(entity_id):
                 errors[CONF_ENTITY_ID] = "invalid_remote"
             else:
+                entity_id = cast(str, entity_id)
                 self._data[CONF_ENTITY_ID] = entity_id
                 return await self.async_step_device_type()
 
         return self.async_show_form(
             step_id="remote",
-            data_schema=self._remote_schema(self._current_value(CONF_ENTITY_ID)),
+            data_schema=self._remote_schema(
+                self._current_value(CONF_ENTITY_ID)
+            ),
             errors=errors,
         )
 
