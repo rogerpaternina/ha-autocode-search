@@ -17,18 +17,14 @@ class RemoteCommandStrategy(ABC):
     """Define how an IR code is represented for a remote entity."""
 
     @abstractmethod
-    async def async_send(
-        self, hass: HomeAssistant, entity_id: str, code: str
-    ) -> None:
+    async def async_send(self, hass: HomeAssistant, entity_id: str, code: str) -> None:
         """Send a code through the supplied Home Assistant remote entity."""
 
 
 class GenericStrategy(RemoteCommandStrategy):
     """Send codes unchanged for generic Home Assistant remote entities."""
 
-    async def async_send(
-        self, hass: HomeAssistant, entity_id: str, code: str
-    ) -> None:
+    async def async_send(self, hass: HomeAssistant, entity_id: str, code: str) -> None:
         """Send a code using the standard remote command representation."""
         await hass.services.async_call(
             "remote",
@@ -59,9 +55,7 @@ class BroadlinkRawStrategy(RemoteCommandStrategy):
 
         return bool(packet) and packet[0] in cls._PACKET_TYPES
 
-    async def async_send(
-        self, hass: HomeAssistant, entity_id: str, code: str
-    ) -> None:
+    async def async_send(self, hass: HomeAssistant, entity_id: str, code: str) -> None:
         """Send a native Broadlink packet with Home Assistant's ``b64:`` syntax."""
         payload = code.removeprefix("b64:")
         await hass.services.async_call(

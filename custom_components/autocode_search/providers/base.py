@@ -35,4 +35,3 @@ class CodeProvider(ABC):
     @abstractmethod
     def reset(self) -> None:
         """Reset the provider cursor to its initial position."""
-

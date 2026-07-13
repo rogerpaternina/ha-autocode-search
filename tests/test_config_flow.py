@@ -121,11 +121,15 @@ class _States:
 
     def async_all(self, domain: str) -> list[_State]:
         """Return states that match the requested domain."""
-        return [state for state in self._states if state.entity_id.startswith(f"{domain}.")]
+        return [
+            state for state in self._states if state.entity_id.startswith(f"{domain}.")
+        ]
 
     def get(self, entity_id: str) -> _State | None:
         """Return a state by entity ID."""
-        return next((state for state in self._states if state.entity_id == entity_id), None)
+        return next(
+            (state for state in self._states if state.entity_id == entity_id), None
+        )
 
 
 class _Hass:

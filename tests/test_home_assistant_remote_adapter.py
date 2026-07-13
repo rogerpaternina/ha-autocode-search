@@ -79,15 +79,11 @@ def test_is_available_checks_for_existing_entity() -> None:
     available_hass = _create_hass(MagicMock())
     unavailable_hass = _create_hass(None)
 
-    available_adapter = HomeAssistantRemoteAdapter(
-        available_hass, "remote.living_room"
-    )
+    available_adapter = HomeAssistantRemoteAdapter(available_hass, "remote.living_room")
     unavailable_adapter = HomeAssistantRemoteAdapter(unavailable_hass, "remote.missing")
 
     assert asyncio.run(available_adapter.is_available())
-    assert not asyncio.run(
-        unavailable_adapter.is_available()
-    )
+    assert not asyncio.run(unavailable_adapter.is_available())
 
 
 def test_get_device_info_returns_remote_state_details() -> None:

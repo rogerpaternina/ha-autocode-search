@@ -68,7 +68,9 @@ class _AutocodeSearchFlowMixin:
                 translation_key=translation_key,
             )
         )
-        field = vol.Required(key) if default is None else vol.Required(key, default=default)
+        field = (
+            vol.Required(key) if default is None else vol.Required(key, default=default)
+        )
         return vol.Schema({field: selector})
 
     def _is_valid_remote(self, entity_id: object) -> bool:
@@ -100,7 +102,9 @@ class AutocodeSearchConfigFlow(
         """Return the handler used to modify an existing config entry."""
         return AutocodeSearchOptionsFlow()
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Select the Home Assistant remote entity."""
         if not self._remote_entity_ids():
             return self.async_abort(reason="no_remote_entities")
@@ -120,7 +124,9 @@ class AutocodeSearchConfigFlow(
             step_id="user", data_schema=self._remote_schema(), errors=errors
         )
 
-    async def async_step_device_type(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_device_type(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Select the device type to search for."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -133,11 +139,15 @@ class AutocodeSearchConfigFlow(
 
         return self.async_show_form(
             step_id="device_type",
-            data_schema=self._select_schema(CONF_DEVICE_TYPE, DEVICE_TYPES, "device_type"),
+            data_schema=self._select_schema(
+                CONF_DEVICE_TYPE, DEVICE_TYPES, "device_type"
+            ),
             errors=errors,
         )
 
-    async def async_step_brand(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_brand(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Select the device brand."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -154,7 +164,9 @@ class AutocodeSearchConfigFlow(
             errors=errors,
         )
 
-    async def async_step_provider(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_provider(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Select the preferred infrared-code provider."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -174,7 +186,9 @@ class AutocodeSearchConfigFlow(
         )
 
 
-class AutocodeSearchOptionsFlow(_AutocodeSearchFlowMixin, config_entries.OptionsFlowWithReload):
+class AutocodeSearchOptionsFlow(
+    _AutocodeSearchFlowMixin, config_entries.OptionsFlowWithReload
+):
     """Handle updates to the Autocode Search configuration."""
 
     def __init__(self) -> None:
@@ -187,11 +201,15 @@ class AutocodeSearchOptionsFlow(_AutocodeSearchFlowMixin, config_entries.Options
         value = self.config_entry.options.get(key, self.config_entry.data.get(key, ""))
         return value if isinstance(value, str) else ""
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Select the Home Assistant remote entity to use."""
         return await self.async_step_remote(user_input)
 
-    async def async_step_remote(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_remote(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Validate and store the selected remote entity."""
         if not self._remote_entity_ids():
             return self.async_abort(reason="no_remote_entities")
@@ -211,7 +229,9 @@ class AutocodeSearchOptionsFlow(_AutocodeSearchFlowMixin, config_entries.Options
             errors=errors,
         )
 
-    async def async_step_device_type(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_device_type(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Validate and store the device type."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -225,12 +245,17 @@ class AutocodeSearchOptionsFlow(_AutocodeSearchFlowMixin, config_entries.Options
         return self.async_show_form(
             step_id="device_type",
             data_schema=self._select_schema(
-                CONF_DEVICE_TYPE, DEVICE_TYPES, "device_type", self._current_value(CONF_DEVICE_TYPE)
+                CONF_DEVICE_TYPE,
+                DEVICE_TYPES,
+                "device_type",
+                self._current_value(CONF_DEVICE_TYPE),
             ),
             errors=errors,
         )
 
-    async def async_step_brand(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_brand(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Validate and store the device brand."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -243,11 +268,15 @@ class AutocodeSearchOptionsFlow(_AutocodeSearchFlowMixin, config_entries.Options
 
         return self.async_show_form(
             step_id="brand",
-            data_schema=self._select_schema(CONF_BRAND, BRANDS, "brand", self._current_value(CONF_BRAND)),
+            data_schema=self._select_schema(
+                CONF_BRAND, BRANDS, "brand", self._current_value(CONF_BRAND)
+            ),
             errors=errors,
         )
 
-    async def async_step_provider(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_provider(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Validate and store the preferred code provider."""
         errors: dict[str, str] = {}
         if user_input is not None:

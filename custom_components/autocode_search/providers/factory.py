@@ -22,8 +22,6 @@ class ProviderFactory:
         try:
             provider = cls._PROVIDERS[provider_name.lower()]
         except KeyError as err:
-            raise ValueError(
-                f"Unknown provider: {provider_name}"
-            ) from err
+            raise ValueError(f"Unknown provider: {provider_name}") from err
 
         return provider()

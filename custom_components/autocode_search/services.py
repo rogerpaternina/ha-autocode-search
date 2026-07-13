@@ -92,7 +92,9 @@ async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
         _LOGGER.exception("Autocode Search failed")
         raise _service_error("Unable to start the Autocode Search session") from err
 
-    _LOGGER.info("Started Autocode Search session %s for %s", session.session_id, entity_id)
+    _LOGGER.info(
+        "Started Autocode Search session %s for %s", session.session_id, entity_id
+    )
     if first_code is None:
         _LOGGER.warning("The search started without an infrared code to send")
 

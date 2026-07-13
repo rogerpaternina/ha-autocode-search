@@ -20,4 +20,3 @@ class IRAdapter(ABC):
     @abstractmethod
     async def get_device_info(self) -> dict[str, Any]:
         """Return non-sensitive metadata about the underlying IR device."""
-

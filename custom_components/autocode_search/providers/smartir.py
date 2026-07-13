@@ -37,4 +37,3 @@ class SmartIRProvider(CodeProvider):
         """Reset the SmartIR cursor."""
         # TODO: Reset the SmartIR cursor to its initial position.
         raise NotImplementedError("SmartIR provider has not been implemented")
-

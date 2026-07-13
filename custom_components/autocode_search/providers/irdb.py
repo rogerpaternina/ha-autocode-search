@@ -37,4 +37,3 @@ class IRDBProvider(CodeProvider):
         """Reset the IRDB cursor."""
         # TODO: Reset the IRDB cursor to its initial position.
         raise NotImplementedError("IRDB provider has not been implemented")
-
