@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from collections.abc import Mapping
+from datetime import UTC, datetime
 from functools import partial
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from .adapters.home_assistant_remote import HomeAssistantRemoteAdapter
@@ -64,7 +65,7 @@ async def _async_start_search(hass: HomeAssistant, call: ServiceCall) -> None:
     try:
         entity_id = _required_string(call.data, "entity_id")
         codes = _required_codes(call.data)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         _LOGGER.debug("Creating SearchSession")
         session = SearchSession(
             session_id=str(uuid4()),

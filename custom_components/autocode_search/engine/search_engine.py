@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from ..adapters.base import IRAdapter
 from ..models.search_session import SearchSession, SearchStatus
@@ -74,4 +74,4 @@ class SearchEngine:
 
 def _utcnow() -> datetime:
     """Return the current timezone-aware UTC datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

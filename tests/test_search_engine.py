@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from custom_components.autocode_search.adapters.base import IRAdapter
 from custom_components.autocode_search.engine.search_engine import SearchEngine
@@ -79,7 +79,7 @@ class FakeAdapter(IRAdapter):
 
 def _create_engine() -> tuple[SearchEngine, FakeProvider, FakeAdapter, SearchSession]:
     """Create an engine with deterministic fake collaborators."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     session = SearchSession(
         session_id="test-session",
         device_type="television",

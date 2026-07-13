@@ -1,8 +1,8 @@
 from .factory import ProviderFactory
-from .memory import InMemoryCodeProvider
-from .smartir import SmartIRProvider
 from .irdb import IRDBProvider
 from .lirc import LIRCProvider
+from .memory import InMemoryCodeProvider
+from .smartir import SmartIRProvider
 
 __all__ = [
     "ProviderFactory",

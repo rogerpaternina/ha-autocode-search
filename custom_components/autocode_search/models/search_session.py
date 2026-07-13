@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 
 
-class SearchStatus(str, Enum):
+class SearchStatus(StrEnum):
     """Represent the lifecycle state of a code search."""
 
     IDLE = "idle"
@@ -88,4 +88,4 @@ class SearchSession:
 
 def _utcnow() -> datetime:
     """Return the current timezone-aware UTC datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

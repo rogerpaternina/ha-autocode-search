@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, TypedDict
 from uuid import uuid4
 
@@ -47,7 +47,7 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         self.configuration: dict[str, Any] = {**entry.data, **entry.options}
         self.adapter: IRAdapter | None = None
         self.search_engine: SearchEngine | None = None
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # TODO: Replace this idle session when the search flow creates one.
         self.search_session = SearchSession(
             session_id=str(uuid4()),

@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from .base import CodeProvider
 from .irdb import IRDBProvider
 from .lirc import LIRCProvider
 from .smartir import SmartIRProvider
 
-ProviderClass: TypeAlias = (
-    type[SmartIRProvider] | type[IRDBProvider] | type[LIRCProvider]
-)
+type ProviderClass = (type[SmartIRProvider] | type[IRDBProvider] | type[LIRCProvider])
 
 
 class ProviderFactory:
