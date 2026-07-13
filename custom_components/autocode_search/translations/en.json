@@ -49,10 +49,17 @@
       "provider_order": { "name": "Provider order" },
       "provider_ranking_reason": { "name": "Provider ranking reason" },
       "success_records": { "name": "Success records" },
-      "last_success": { "name": "Last success" }
+      "last_success": { "name": "Last success" },
+      "last_provider": { "name": "Last provider" },
+      "last_tested_command": { "name": "Last tested command" }
     },
     "binary_sensor": {
-      "running": { "name": "Running" }
+      "running": { "name": "Running" },
+      "waiting_confirmation": { "name": "Waiting confirmation" }
+    },
+    "button": {
+      "confirm_success": { "name": "Confirm success" },
+      "reject_result": { "name": "Reject result" }
     }
   }
 }

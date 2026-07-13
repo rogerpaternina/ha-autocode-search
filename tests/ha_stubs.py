@@ -112,6 +112,10 @@ class _BinarySensorEntity:
     """Minimal BinarySensorEntity replacement for tests."""
 
 
+class _ButtonEntity:
+    """Minimal ButtonEntity replacement for tests."""
+
+
 class _HomeAssistantError(Exception):
     """Minimal HomeAssistantError replacement for tests."""
 
@@ -161,7 +165,7 @@ def install_home_assistant_stubs() -> None:
     data_entry_flow.FlowResult = dict[str, Any]
     helpers = ModuleType("homeassistant.helpers")
     entity = ModuleType("homeassistant.helpers.entity")
-    entity.EntityCategory = SimpleNamespace(DIAGNOSTIC="diagnostic")
+    entity.EntityCategory = SimpleNamespace(DIAGNOSTIC="diagnostic", CONFIG="config")
     update_coordinator = ModuleType("homeassistant.helpers.update_coordinator")
     update_coordinator.DataUpdateCoordinator = _DataUpdateCoordinator
     update_coordinator.CoordinatorEntity = _CoordinatorEntity
@@ -178,6 +182,8 @@ def install_home_assistant_stubs() -> None:
     sensor.SensorEntity = _SensorEntity
     binary_sensor = ModuleType("homeassistant.components.binary_sensor")
     binary_sensor.BinarySensorEntity = _BinarySensorEntity
+    button = ModuleType("homeassistant.components.button")
+    button.ButtonEntity = _ButtonEntity
 
     voluptuous = ModuleType("voluptuous")
     voluptuous.Schema = _Schema
@@ -196,6 +202,7 @@ def install_home_assistant_stubs() -> None:
     homeassistant.components = components
     components.sensor = sensor
     components.binary_sensor = binary_sensor
+    components.button = button
 
     sys.modules.update(
         {
@@ -215,5 +222,6 @@ def install_home_assistant_stubs() -> None:
             "homeassistant.components": components,
             "homeassistant.components.sensor": sensor,
             "homeassistant.components.binary_sensor": binary_sensor,
+            "homeassistant.components.button": button,
         }
     )

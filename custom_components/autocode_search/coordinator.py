@@ -20,6 +20,13 @@ from .models.search_filter import SearchFilter
 from .providers.base import CodeProvider
 from .providers.composite import CompositeCodeProvider
 from .storage import StorageBackend
+from .success_workflow import (
+    log_awaiting_confirmation,
+    log_confirmed_success,
+    log_rejected_result,
+    remember_success,
+    resolve_provider_name,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,6 +59,9 @@ class AutocodeSearchData(TypedDict):
     provider_ranking_reason: str
     success_count: int
     last_success: str
+    awaiting_confirmation: bool
+    last_provider: str | None
+    last_tested_command: str | None
 
 
 class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
@@ -75,6 +85,7 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         self.search_engine: SearchEngine | None = None
         self.success_memory: SuccessMemory = default_success_memory()
         self.storage_backend = StorageBackend(hass)
+        self._last_search_filter: SearchFilter | None = None
         now = datetime.now(UTC)
         self.search_session = SearchSession(
             session_id=str(uuid4()),
@@ -115,6 +126,8 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         self.adapter = adapter
         self.search_session = session
         self.search_engine = engine
+        self._last_search_filter = search_filter
+        session.reset_confirmation_state()
         await self.async_publish_session()
         return engine
 
@@ -133,17 +146,64 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
     async def async_cancel_search(self) -> None:
         """Cancel the active search session."""
         engine = self._require_search_engine()
+        last_code = engine.provider.current()
+        last_provider = resolve_provider_name(
+            engine.provider,
+            last_code,
+            fallback_provider=self.search_session.last_provider,
+        )
         await engine.cancel()
+        if last_code is not None and self.search_session.last_tested_code is None:
+            self.search_session.capture_last_tested(last_code, last_provider)
+        self._activate_confirmation_if_needed()
         await self.async_publish_session()
 
     async def async_finish_search(self) -> None:
         """Finish the active search session."""
         engine = self._require_search_engine()
+        last_code = engine.provider.current()
+        last_provider = resolve_provider_name(
+            engine.provider,
+            last_code,
+            fallback_provider=self.search_session.last_provider,
+        )
         await engine.finish()
+        if last_code is not None and self.search_session.last_tested_code is None:
+            self.search_session.capture_last_tested(last_code, last_provider)
+        self._activate_confirmation_if_needed()
+        await self.async_publish_session()
+
+    async def async_confirm_success(self) -> None:
+        """Remember the last tested code after user confirmation."""
+        session = self.search_session
+        if not session.awaiting_confirmation or session.last_tested_code is None:
+            raise RuntimeError("No search result is awaiting confirmation")
+
+        remember_success(
+            self.success_memory,
+            self._last_search_filter,
+            session.last_tested_code,
+            session.last_provider,
+        )
+        session.clear_confirmation()
+        log_confirmed_success()
+        await self.async_publish_session()
+
+    async def async_reject_result(self) -> None:
+        """Dismiss the pending confirmation without storing a success."""
+        session = self.search_session
+        if not session.awaiting_confirmation:
+            raise RuntimeError("No search result is awaiting confirmation")
+
+        session.clear_confirmation()
+        log_rejected_result()
         await self.async_publish_session()
 
     async def async_publish_session(self) -> None:
         """Publish the latest session state to coordinator listeners."""
+        if self.search_engine is not None:
+            self._capture_last_tested_from_engine(self.search_engine)
+            self._activate_confirmation_if_needed()
         data = await self._async_build_data()
         self.async_set_updated_data(data)
 
@@ -181,6 +241,9 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             provider_ranking_reason=session.provider_ranking_reason,
             success_count=self.success_memory.count(),
             last_success=self._format_last_success(),
+            awaiting_confirmation=session.awaiting_confirmation,
+            last_provider=session.last_provider,
+            last_tested_command=self._format_last_tested_command(session),
         )
 
     async def _async_get_adapter_status(self) -> dict[str, Any]:
@@ -210,6 +273,43 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         if record is None:
             return ""
         return self.success_memory.format_record_summary(record)
+
+    def _format_last_tested_command(self, session: SearchSession) -> str | None:
+        """Return the last tested command label for display."""
+        if session.last_tested_code is None:
+            return None
+        return session.last_tested_code.name.strip().upper()
+
+    def _capture_last_tested_from_engine(self, engine: SearchEngine) -> None:
+        """Store the last tested code when a search has ended."""
+        session = self.search_session
+        if session.status not in (SearchStatus.FINISHED, SearchStatus.CANCELLED):
+            return
+        if session.last_tested_code is not None:
+            return
+
+        code = engine.provider.current()
+        if code is None:
+            return
+
+        provider = resolve_provider_name(
+            engine.provider,
+            code,
+            fallback_provider=session.last_provider,
+        )
+        session.capture_last_tested(code, provider)
+
+    def _activate_confirmation_if_needed(self) -> None:
+        """Enable confirmation when a finished search has a tested code."""
+        session = self.search_session
+        if session.status not in (SearchStatus.FINISHED, SearchStatus.CANCELLED):
+            return
+        if session.awaiting_confirmation or session.last_tested_code is None:
+            return
+
+        session.activate_confirmation()
+        command = session.last_tested_code.name if session.last_tested_code else None
+        log_awaiting_confirmation(session.last_provider, command)
 
 
 def _sync_provider_statistics(provider: CodeProvider, session: SearchSession) -> None:

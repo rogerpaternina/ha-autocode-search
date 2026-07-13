@@ -61,6 +61,9 @@ def _create_sensor_environment() -> tuple[AutocodeSearchCoordinator, SimpleNames
         "provider_ranking_reason": "Model specified",
         "success_count": 0,
         "last_success": "",
+        "awaiting_confirmation": False,
+        "last_provider": None,
+        "last_tested_command": None,
     }
     return coordinator, entry
 

@@ -47,4 +47,4 @@ BRANDS: tuple[str, ...] = (
 PROVIDERS: tuple[str, ...] = ("smartir", "irdb", "lirc", "auto")
 DEFAULT_PROVIDER = "auto"
 
-PLATFORMS: list[Platform] = ["sensor", "binary_sensor"]
+PLATFORMS: list[Platform] = ["sensor", "binary_sensor", "button"]

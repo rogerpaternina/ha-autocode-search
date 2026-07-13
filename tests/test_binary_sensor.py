@@ -39,6 +39,7 @@ def _create_binary_sensor(search_status: str) -> AutocodeRunningBinarySensor:
         "search_rate": None,
         "paused": search_status == "paused",
         "cancelled": search_status == "cancelled",
+        "awaiting_confirmation": False,
     }
     return AutocodeRunningBinarySensor(coordinator, entry)  # type: ignore[arg-type]
 

@@ -14,6 +14,7 @@ from .const import CONF_PROVIDER, DEFAULT_PROVIDER, DOMAIN
 from .models import SearchSession, SearchStatus
 from .models.ir_code import IRCode
 from .models.search_filter import SearchFilter
+from .success_workflow import normalize_manual_provider, remember_success
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant, ServiceCall
@@ -31,6 +32,8 @@ SERVICE_RESUME = "resume"
 SERVICE_CANCEL = "cancel"
 SERVICE_MARK_SUCCESS = "mark_success"
 SERVICE_CLEAR_SUCCESS_MEMORY = "clear_success_memory"
+SERVICE_CONFIRM_SUCCESS = "confirm_success"
+SERVICE_REJECT_RESULT = "reject_result"
 
 _REGISTERED_SERVICES = (
     SERVICE_START_SEARCH,
@@ -42,6 +45,8 @@ _REGISTERED_SERVICES = (
     SERVICE_CANCEL,
     SERVICE_MARK_SUCCESS,
     SERVICE_CLEAR_SUCCESS_MEMORY,
+    SERVICE_CONFIRM_SUCCESS,
+    SERVICE_REJECT_RESULT,
 )
 
 
@@ -75,6 +80,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_CLEAR_SUCCESS_MEMORY,
         partial(_async_clear_success_memory, hass),
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_CONFIRM_SUCCESS, partial(_async_confirm_success, hass)
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_REJECT_RESULT, partial(_async_reject_result, hass)
     )
 
 
@@ -243,7 +254,12 @@ async def _async_mark_success(hass: HomeAssistant, call: ServiceCall) -> None:
             model=_optional_filter_string(call.data, "model"),
             device_type=_optional_filter_string(call.data, "device_type"),
         )
-        coordinator.success_memory.remember(search_filter, ir_code, provider)
+        remember_success(
+            coordinator.success_memory,
+            search_filter,
+            ir_code,
+            normalize_manual_provider(provider),
+        )
         await coordinator.async_publish_session()
     except Exception as err:
         _LOGGER.exception("Autocode Search failed")
@@ -263,6 +279,33 @@ async def _async_clear_success_memory(hass: HomeAssistant, call: ServiceCall) ->
         raise _service_error("Unable to clear success memory") from err
 
     _LOGGER.info("Cleared Autocode Search success memory")
+
+
+async def _async_confirm_success(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Confirm the last tested code and store it in success memory."""
+    coordinator = _get_coordinator(hass)
+    try:
+        await coordinator.async_confirm_success()
+    except Exception as err:
+        _LOGGER.exception("Autocode Search failed")
+        raise _service_error("Unable to confirm the successful infrared code") from err
+
+    _LOGGER.info(
+        "Confirmed successful infrared code from provider %s",
+        coordinator.search_session.last_provider,
+    )
+
+
+async def _async_reject_result(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Reject the last tested code without storing a success."""
+    coordinator = _get_coordinator(hass)
+    try:
+        await coordinator.async_reject_result()
+    except Exception as err:
+        _LOGGER.exception("Autocode Search failed")
+        raise _service_error("Unable to reject the last infrared code result") from err
+
+    _LOGGER.info("Rejected the last infrared code result")
 
 
 def _get_coordinator(hass: HomeAssistant) -> AutocodeSearchCoordinator:

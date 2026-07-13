@@ -40,10 +40,17 @@
       "provider_order": { "name": "Orden de proveedores" },
       "provider_ranking_reason": { "name": "Motivo del orden de proveedores" },
       "success_records": { "name": "Éxitos registrados" },
-      "last_success": { "name": "Último éxito" }
+      "last_success": { "name": "Último éxito" },
+      "last_provider": { "name": "Último proveedor" },
+      "last_tested_command": { "name": "Último comando probado" }
     },
     "binary_sensor": {
-      "running": { "name": "En ejecución" }
+      "running": { "name": "En ejecución" },
+      "waiting_confirmation": { "name": "Esperando confirmación" }
+    },
+    "button": {
+      "confirm_success": { "name": "Confirmar éxito" },
+      "reject_result": { "name": "Rechazar resultado" }
     }
   }
 }

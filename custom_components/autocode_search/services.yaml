@@ -110,3 +110,11 @@ mark_success:
 clear_success_memory:
   name: Clear success memory
   description: Remove every remembered successful infrared code from memory and storage.
+
+confirm_success:
+  name: Confirm success
+  description: Record the last tested infrared code as a successful result.
+
+reject_result:
+  name: Reject result
+  description: Dismiss the pending confirmation without storing a success.

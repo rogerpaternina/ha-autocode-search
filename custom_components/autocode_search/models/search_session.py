@@ -54,6 +54,10 @@ class SearchSession:
     duplicates_removed: int = 0
     provider_order: list[str] = field(default_factory=list)
     provider_ranking_reason: str = ""
+    last_tested_code: IRCode | None = None
+    last_provider: str | None = None
+    awaiting_confirmation: bool = False
+    confirmation_time: datetime | None = None
 
     def __post_init__(self) -> None:
         """Validate the immutable bounds of the session progress."""
@@ -185,6 +189,33 @@ class SearchSession:
             return None
 
         return self.codes_tested / elapsed
+
+    def reset_confirmation_state(self) -> None:
+        """Clear every confirmation-related field for a new search."""
+        self.last_tested_code = None
+        self.last_provider = None
+        self.awaiting_confirmation = False
+        self.confirmation_time = None
+
+    def capture_last_tested(self, code: IRCode, provider: str | None) -> None:
+        """Store the last tested code and provider without activating confirmation."""
+        self.last_tested_code = code
+        self.last_provider = provider
+        self.last_update = _utcnow()
+
+    def activate_confirmation(self) -> None:
+        """Mark the session as waiting for user confirmation."""
+        if self.last_tested_code is None:
+            return
+        self.awaiting_confirmation = True
+        self.confirmation_time = _utcnow()
+        self.last_update = _utcnow()
+
+    def clear_confirmation(self) -> None:
+        """Stop waiting for user confirmation."""
+        self.awaiting_confirmation = False
+        self.confirmation_time = None
+        self.last_update = _utcnow()
 
 
 def _utcnow() -> datetime:

@@ -42,6 +42,8 @@ async def async_setup_entry(
             AutocodeProviderRankingReasonSensor(coordinator, entry),
             AutocodeSuccessRecordsSensor(coordinator, entry),
             AutocodeLastSuccessSensor(coordinator, entry),
+            AutocodeLastProviderSensor(coordinator, entry),
+            AutocodeLastTestedCommandSensor(coordinator, entry),
         ]
     )
 
@@ -235,3 +237,27 @@ class AutocodeLastSuccessSensor(AutocodeSearchSensor):
     def native_value(self) -> str:
         """Return the latest success summary."""
         return self.coordinator.data["last_success"] or "None"
+
+
+class AutocodeLastProviderSensor(AutocodeSearchSensor):
+    """Expose the provider of the last tested code."""
+
+    _attr_translation_key = "last_provider"
+    _attr_unique_id = "autocode_last_provider"
+
+    @property
+    def native_value(self) -> str:
+        """Return the last tested provider."""
+        return self.coordinator.data["last_provider"] or "None"
+
+
+class AutocodeLastTestedCommandSensor(AutocodeSearchSensor):
+    """Expose the command of the last tested code."""
+
+    _attr_translation_key = "last_tested_command"
+    _attr_unique_id = "autocode_last_tested_command"
+
+    @property
+    def native_value(self) -> str:
+        """Return the last tested command."""
+        return self.coordinator.data["last_tested_command"] or "None"
