@@ -43,3 +43,15 @@ previous_code:
 finish_search:
   name: Finish search
   description: Finish the active infrared-code search.
+
+pause:
+  name: Pause search
+  description: Pause the active infrared-code search without losing progress.
+
+resume:
+  name: Resume search
+  description: Resume a paused infrared-code search.
+
+cancel:
+  name: Cancel search
+  description: Cancel the active infrared-code search immediately.

@@ -4,104 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import sys
 from dataclasses import dataclass
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 from typing import Any
 
-
-class _Schema(dict[Any, Any]):
-    """Minimal voluptuous schema replacement for flow tests."""
-
-
-class _SelectSelectorConfig:
-    """Store select selector configuration for flow tests."""
-
-    def __init__(self, **kwargs: Any) -> None:
-        """Store selector keyword arguments."""
-        self.kwargs = kwargs
-
-
-class _SelectSelector:
-    """Store the select selector configuration for flow tests."""
-
-    def __init__(self, config: _SelectSelectorConfig) -> None:
-        """Store the selector configuration."""
-        self.config = config
-
-
-class _FlowBase:
-    """Implement the Home Assistant flow result helpers used by the tests."""
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Accept Home Assistant's domain keyword when subclasses are declared."""
-        super().__init_subclass__()
-
-    async def async_set_unique_id(self, unique_id: str) -> None:
-        """Record the requested unique ID."""
-        self.unique_id = unique_id
-
-    def _abort_if_unique_id_configured(self) -> None:
-        """Treat all fake test entities as not yet configured."""
-
-    def async_show_form(self, **kwargs: Any) -> dict[str, Any]:
-        """Return a form result matching Home Assistant's result shape."""
-        return {"type": "form", **kwargs}
-
-    def async_create_entry(self, **kwargs: Any) -> dict[str, Any]:
-        """Return a create-entry result matching Home Assistant's result shape."""
-        return {"type": "create_entry", **kwargs}
-
-    def async_abort(self, **kwargs: Any) -> dict[str, Any]:
-        """Return an abort result matching Home Assistant's result shape."""
-        return {"type": "abort", **kwargs}
-
-
-class _ConfigFlow(_FlowBase):
-    """Minimal replacement for Home Assistant's ConfigFlow."""
-
-
-class _OptionsFlowWithReload(_FlowBase):
-    """Minimal replacement for Home Assistant's OptionsFlowWithReload."""
-
-
-def _install_home_assistant_flow_stubs() -> None:
-    """Install the small Home Assistant API surface used by config_flow tests."""
-    voluptuous = ModuleType("voluptuous")
-    voluptuous.Schema = _Schema
-    voluptuous.Required = lambda key, default=None: key
-    sys.modules["voluptuous"] = voluptuous
-
-    homeassistant = ModuleType("homeassistant")
-    config_entries = ModuleType("homeassistant.config_entries")
-    config_entries.ConfigEntry = SimpleNamespace
-    config_entries.ConfigFlow = _ConfigFlow
-    config_entries.OptionsFlowWithReload = _OptionsFlowWithReload
-    core = ModuleType("homeassistant.core")
-    core.callback = lambda function: function
-    data_entry_flow = ModuleType("homeassistant.data_entry_flow")
-    data_entry_flow.FlowResult = dict[str, Any]
-    helpers = ModuleType("homeassistant.helpers")
-    selector = ModuleType("homeassistant.helpers.selector")
-    selector.SelectSelector = _SelectSelector
-    selector.SelectSelectorConfig = _SelectSelectorConfig
-    selector.SelectSelectorMode = SimpleNamespace(DROPDOWN="dropdown")
-
-    homeassistant.config_entries = config_entries
-    homeassistant.core = core
-    sys.modules.update(
-        {
-            "homeassistant": homeassistant,
-            "homeassistant.config_entries": config_entries,
-            "homeassistant.core": core,
-            "homeassistant.data_entry_flow": data_entry_flow,
-            "homeassistant.helpers": helpers,
-            "homeassistant.helpers.selector": selector,
-        }
-    )
-
-
-_install_home_assistant_flow_stubs()
 config_flow = importlib.import_module("custom_components.autocode_search.config_flow")
 
 

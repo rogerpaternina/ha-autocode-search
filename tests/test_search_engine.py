@@ -5,10 +5,13 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime
 
+import pytest
+
 from custom_components.autocode_search.adapters.base import IRAdapter
 from custom_components.autocode_search.engine.search_engine import SearchEngine
 from custom_components.autocode_search.models.ir_code import IRCode
 from custom_components.autocode_search.models.search_session import (
+    InvalidStateTransitionError,
     SearchSession,
     SearchStatus,
 )
@@ -20,7 +23,15 @@ class FakeProvider(CodeProvider):
 
     def __init__(self, codes: list[str]) -> None:
         """Initialize the provider with a sequence of codes."""
-        self._codes = [IRCode(name=code, payload=code) for code in codes]
+        self._codes = [
+            IRCode(
+                name=code,
+                payload=code,
+                manufacturer="LG",
+                model=f"model-{code}",
+            )
+            for code in codes
+        ]
         self._index = 0
         self.loaded = False
 
@@ -89,7 +100,7 @@ def _create_engine() -> tuple[SearchEngine, FakeProvider, FakeAdapter, SearchSes
         current_index=0,
         total_codes=0,
         status=SearchStatus.IDLE,
-        started_at=now,
+        started_at=None,
         last_update=now,
     )
     provider = FakeProvider(["code-1", "code-2", "code-3"])
@@ -107,6 +118,23 @@ def test_start_loads_provider_and_starts_session() -> None:
     assert session.status is SearchStatus.RUNNING
     assert session.current_index == 0
     assert session.total_codes == 3
+    assert session.codes_tested == 0
+    assert session.started_at is not None
+
+
+def test_send_current_updates_progress_and_metadata() -> None:
+    """Sending the current code records progress and metadata."""
+    engine, _, adapter, session = _create_engine()
+
+    asyncio.run(engine.start())
+    sent_code = asyncio.run(engine.send_current())
+
+    assert sent_code == "code-1"
+    assert adapter.sent_codes == ["code-1"]
+    assert session.codes_tested == 1
+    assert session.current_code == "code-1"
+    assert session.current_manufacturer == "LG"
+    assert session.progress == pytest.approx(1 / 3)
 
 
 def test_next_sends_next_code_and_advances_session() -> None:
@@ -114,11 +142,13 @@ def test_next_sends_next_code_and_advances_session() -> None:
     engine, _, adapter, session = _create_engine()
 
     asyncio.run(engine.start())
+    asyncio.run(engine.send_current())
     sent_code = asyncio.run(engine.next())
 
     assert sent_code == "code-2"
-    assert adapter.sent_codes == ["code-2"]
+    assert adapter.sent_codes == ["code-1", "code-2"]
     assert session.current_index == 1
+    assert session.codes_tested == 2
 
 
 def test_previous_sends_previous_code_and_rewinds_session() -> None:
@@ -126,12 +156,54 @@ def test_previous_sends_previous_code_and_rewinds_session() -> None:
     engine, _, adapter, session = _create_engine()
 
     asyncio.run(engine.start())
+    asyncio.run(engine.send_current())
     asyncio.run(engine.next())
     sent_code = asyncio.run(engine.previous())
 
     assert sent_code == "code-1"
-    assert adapter.sent_codes == ["code-2", "code-1"]
+    assert adapter.sent_codes == ["code-1", "code-2", "code-1"]
     assert session.current_index == 0
+    assert session.codes_tested == 2
+
+
+def test_pause_blocks_sending_until_resume() -> None:
+    """Paused searches do not send new codes until they are resumed."""
+    engine, _, adapter, session = _create_engine()
+
+    async def _run() -> None:
+        await engine.start()
+        await engine.send_current()
+        await engine.pause()
+        blocked = await engine.next()
+        await engine.resume()
+        resumed = await engine.next()
+
+        assert blocked is None
+        assert resumed == "code-2"
+
+    asyncio.run(_run())
+
+    assert session.status is SearchStatus.RUNNING
+    assert adapter.sent_codes == ["code-1", "code-2"]
+
+
+def test_cancel_stops_search_and_blocks_further_sends() -> None:
+    """Cancelled searches stop immediately and reject new sends."""
+    engine, provider, adapter, session = _create_engine()
+
+    async def _run() -> None:
+        await engine.start()
+        await engine.send_current()
+        await engine.cancel()
+        blocked = await engine.next()
+
+        assert blocked is None
+
+    asyncio.run(_run())
+
+    assert session.status is SearchStatus.CANCELLED
+    assert provider._index == 0
+    assert adapter.sent_codes == ["code-1"]
 
 
 def test_finish_marks_session_as_finished() -> None:
@@ -143,3 +215,39 @@ def test_finish_marks_session_as_finished() -> None:
 
     assert session.status is SearchStatus.FINISHED
     assert session.current_index == session.total_codes
+    assert session.codes_tested == session.total_codes
+
+
+def test_run_iterates_until_finish() -> None:
+    """Automatic search execution finishes after testing every code."""
+    engine, _, adapter, session = _create_engine()
+
+    asyncio.run(engine.run())
+
+    assert session.status is SearchStatus.FINISHED
+    assert session.codes_tested == 3
+    assert adapter.sent_codes == ["code-1", "code-2", "code-3"]
+
+
+def test_run_respects_cancel() -> None:
+    """Automatic search execution stops when cancelled."""
+    engine, _, adapter, session = _create_engine()
+
+    async def _run() -> None:
+        await engine.start()
+        await engine.send_current()
+        await engine.cancel()
+        await engine.run()
+
+    asyncio.run(_run())
+
+    assert session.status is SearchStatus.CANCELLED
+    assert adapter.sent_codes == ["code-1"]
+
+
+def test_pause_from_idle_raises() -> None:
+    """Pause cannot be triggered before the search starts."""
+    engine, _, _, _ = _create_engine()
+
+    with pytest.raises(InvalidStateTransitionError):
+        asyncio.run(engine.pause())

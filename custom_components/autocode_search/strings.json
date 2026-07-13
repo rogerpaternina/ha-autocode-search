@@ -123,5 +123,19 @@
         "auto": "Auto"
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "progress": { "name": "Progress" },
+      "codes_tested": { "name": "Codes tested" },
+      "total_codes": { "name": "Total codes" },
+      "current_command": { "name": "Current command" },
+      "current_manufacturer": { "name": "Current manufacturer" },
+      "current_model": { "name": "Current model" },
+      "elapsed_time": { "name": "Elapsed time" }
+    },
+    "binary_sensor": {
+      "running": { "name": "Running" }
+    }
   }
 }

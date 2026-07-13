@@ -33,5 +33,19 @@
     "device_type": {"options": {"tv": "TV", "air_conditioner": "Air Conditioner", "fan": "Fan", "av_receiver": "AV Receiver", "projector": "Projector", "set_top_box": "Set Top Box", "audio_system": "Audio System", "other": "Other"}},
     "brand": {"options": {"samsung": "Samsung", "lg": "LG", "sony": "Sony", "panasonic": "Panasonic", "philips": "Philips", "tcl": "TCL", "hisense": "Hisense", "sharp": "Sharp", "daikin": "Daikin", "midea": "Midea", "carrier": "Carrier", "gree": "Gree", "universal": "Universal", "other": "Other"}},
     "provider": {"options": {"smartir": "SmartIR", "irdb": "IRDB", "lirc": "LIRC", "auto": "Auto"}}
+  },
+  "entity": {
+    "sensor": {
+      "progress": { "name": "Progress" },
+      "codes_tested": { "name": "Codes tested" },
+      "total_codes": { "name": "Total codes" },
+      "current_command": { "name": "Current command" },
+      "current_manufacturer": { "name": "Current manufacturer" },
+      "current_model": { "name": "Current model" },
+      "elapsed_time": { "name": "Elapsed time" }
+    },
+    "binary_sensor": {
+      "running": { "name": "Running" }
+    }
   }
 }

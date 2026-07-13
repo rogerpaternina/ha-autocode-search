@@ -26,6 +26,18 @@ class AutocodeSearchData(TypedDict):
     status: str
     adapter_available: bool | None
     device_info: dict[str, Any] | None
+    session_id: str
+    search_status: str
+    codes_tested: int
+    codes_total: int
+    progress: float
+    current_code: str | None
+    current_manufacturer: str | None
+    current_model: str | None
+    elapsed_time: str
+    search_rate: float | None
+    paused: bool
+    cancelled: bool
 
 
 class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
@@ -48,7 +60,6 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         self.adapter: IRAdapter | None = None
         self.search_engine: SearchEngine | None = None
         now = datetime.now(UTC)
-        # TODO: Replace this idle session when the search flow creates one.
         self.search_session = SearchSession(
             session_id=str(uuid4()),
             device_type="",
@@ -57,10 +68,9 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             current_index=0,
             total_codes=0,
             status=SearchStatus.IDLE,
-            started_at=now,
+            started_at=None,
             last_update=now,
         )
-        # TODO: Initialize a SearchEngine from the configured provider and remote.
 
     async def async_start_search(
         self,
@@ -72,18 +82,71 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         _LOGGER.debug("Creating SearchEngine")
         engine = SearchEngine(provider, adapter, session)
         _LOGGER.debug("Calling engine.start()")
-        _LOGGER.debug("Calling provider.load()")
         await engine.start()
         self.adapter = adapter
         self.search_session = session
         self.search_engine = engine
+        await self.async_publish_session()
         return engine
+
+    async def async_pause_search(self) -> None:
+        """Pause the active search session."""
+        engine = self._require_search_engine()
+        await engine.pause()
+        await self.async_publish_session()
+
+    async def async_resume_search(self) -> None:
+        """Resume the paused search session."""
+        engine = self._require_search_engine()
+        await engine.resume()
+        await self.async_publish_session()
+
+    async def async_cancel_search(self) -> None:
+        """Cancel the active search session."""
+        engine = self._require_search_engine()
+        await engine.cancel()
+        await self.async_publish_session()
+
+    async def async_finish_search(self) -> None:
+        """Finish the active search session."""
+        engine = self._require_search_engine()
+        await engine.finish()
+        await self.async_publish_session()
+
+    async def async_publish_session(self) -> None:
+        """Publish the latest session state to coordinator listeners."""
+        data = await self._async_build_data()
+        self.async_set_updated_data(data)
 
     async def _async_update_data(self) -> AutocodeSearchData:
         """Return the latest shared data for the integration."""
+        return await self._async_build_data()
+
+    async def _async_build_data(self) -> AutocodeSearchData:
+        """Build the coordinator payload from adapter and session state."""
+        session = self.search_session
+        adapter_status = await self._async_get_adapter_status()
+        return AutocodeSearchData(
+            status=adapter_status["status"],
+            adapter_available=adapter_status["adapter_available"],
+            device_info=adapter_status["device_info"],
+            session_id=session.session_id,
+            search_status=session.status.value,
+            codes_tested=session.codes_tested,
+            codes_total=session.codes_total,
+            progress=session.progress,
+            current_code=session.current_code,
+            current_manufacturer=session.current_manufacturer,
+            current_model=session.current_model,
+            elapsed_time=session.format_elapsed_time(),
+            search_rate=session.search_rate(),
+            paused=session.paused,
+            cancelled=session.cancelled,
+        )
+
+    async def _async_get_adapter_status(self) -> dict[str, Any]:
+        """Return adapter availability data for the coordinator."""
         if self.adapter is None:
-            # TODO: Inject an adapter after hardware configuration is implemented.
-            # TODO: Start and advance self.search_session from the search engine.
             return {
                 "status": "adapter_not_configured",
                 "adapter_available": None,
@@ -95,3 +158,9 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             "adapter_available": await self.adapter.is_available(),
             "device_info": await self.adapter.get_device_info(),
         }
+
+    def _require_search_engine(self) -> SearchEngine:
+        """Return the active search engine or raise a runtime error."""
+        if self.search_engine is None:
+            raise RuntimeError("No active Autocode Search session")
+        return self.search_engine
