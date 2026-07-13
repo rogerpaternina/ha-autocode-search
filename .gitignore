@@ -18,3 +18,17 @@ docker/config/home-assistant.log*
 
 __pycache__/
 *.py[cod]
+
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+coverage.xml
+htmlcov/
+
+__pycache__/
+
+*.pyc
+
+.vscode/
+.idea/
