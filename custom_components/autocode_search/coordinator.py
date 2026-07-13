@@ -19,6 +19,7 @@ from .models import SearchSession, SearchStatus
 from .models.search_filter import SearchFilter
 from .providers.base import CodeProvider
 from .providers.composite import CompositeCodeProvider
+from .storage import StorageBackend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,6 +74,7 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
         self.adapter: IRAdapter | None = None
         self.search_engine: SearchEngine | None = None
         self.success_memory: SuccessMemory = default_success_memory()
+        self.storage_backend = StorageBackend(hass)
         now = datetime.now(UTC)
         self.search_session = SearchSession(
             session_id=str(uuid4()),
@@ -85,6 +87,17 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             started_at=None,
             last_update=now,
         )
+
+    async def async_config_entry_first_refresh(self) -> None:
+        """Load persisted success memory and publish the initial coordinator data."""
+        await self._async_load_success_memory()
+        await super().async_config_entry_first_refresh()
+
+    async def _async_load_success_memory(self) -> None:
+        """Load success records from storage and bind persistence."""
+        records = await self.storage_backend.async_load()
+        self.success_memory.load_records(records)
+        self.storage_backend.attach(self.success_memory)
 
     async def async_start_search(
         self,

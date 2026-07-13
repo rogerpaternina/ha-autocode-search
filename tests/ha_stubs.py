@@ -116,6 +116,29 @@ class _HomeAssistantError(Exception):
     """Minimal HomeAssistantError replacement for tests."""
 
 
+class _Store:
+    """Minimal Store replacement for persistence tests."""
+
+    def __init__(self, hass: Any, version: int, key: str) -> None:
+        """Store initialization arguments and an in-memory payload."""
+        self.hass = hass
+        self.version = version
+        self.key = key
+        storage = getattr(hass, "_storage", None)
+        if storage is None:
+            storage = {}
+            hass._storage = storage
+        self._bucket = storage.setdefault(key, {"version": version, "data": None})
+
+    async def async_load(self) -> dict[str, Any] | None:
+        """Return the stored payload."""
+        return self._bucket["data"]
+
+    async def async_save(self, data: dict[str, Any]) -> None:
+        """Replace the stored payload."""
+        self._bucket["data"] = data
+
+
 def install_home_assistant_stubs() -> None:
     """Install the Home Assistant API surface used by integration tests."""
     if "homeassistant.helpers.update_coordinator" in sys.modules:
@@ -144,6 +167,8 @@ def install_home_assistant_stubs() -> None:
     update_coordinator.CoordinatorEntity = _CoordinatorEntity
     entity_platform = ModuleType("homeassistant.helpers.entity_platform")
     entity_platform.AddEntitiesCallback = Any
+    storage = ModuleType("homeassistant.helpers.storage")
+    storage.Store = _Store
     selector = ModuleType("homeassistant.helpers.selector")
     selector.SelectSelector = _SelectSelector
     selector.SelectSelectorConfig = _SelectSelectorConfig
@@ -166,6 +191,7 @@ def install_home_assistant_stubs() -> None:
     helpers.entity = entity
     helpers.update_coordinator = update_coordinator
     helpers.entity_platform = entity_platform
+    helpers.storage = storage
     helpers.selector = selector
     homeassistant.components = components
     components.sensor = sensor
@@ -184,6 +210,7 @@ def install_home_assistant_stubs() -> None:
             "homeassistant.helpers.entity": entity,
             "homeassistant.helpers.update_coordinator": update_coordinator,
             "homeassistant.helpers.entity_platform": entity_platform,
+            "homeassistant.helpers.storage": storage,
             "homeassistant.helpers.selector": selector,
             "homeassistant.components": components,
             "homeassistant.components.sensor": sensor,

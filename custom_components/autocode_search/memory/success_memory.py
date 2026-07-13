@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
 
 from ..models.ir_code import IRCode
@@ -30,6 +31,18 @@ class SuccessMemory:
     def __init__(self) -> None:
         """Initialize an empty in-memory success store."""
         self._records: list[SuccessRecord] = []
+        self._persist_callback: Callable[[list[SuccessRecord]], None] | None = None
+
+    def set_persist_callback(
+        self,
+        callback: Callable[[list[SuccessRecord]], None] | None,
+    ) -> None:
+        """Register a callback invoked after records change."""
+        self._persist_callback = callback
+
+    def load_records(self, records: list[SuccessRecord]) -> None:
+        """Replace in-memory records, typically after loading from storage."""
+        self._records = list(records)
 
     def remember(
         self,
@@ -68,10 +81,12 @@ class SuccessMemory:
                 )
                 self._records[index] = updated
                 _log_success_recorded(updated)
+                self._persist()
                 return updated
 
         self._records.append(record)
         _log_success_recorded(record)
+        self._persist()
         return record
 
     def find(self, search_filter: SearchFilter | None) -> list[SuccessRecord]:
@@ -97,6 +112,7 @@ class SuccessMemory:
     def clear(self) -> None:
         """Remove every remembered success."""
         self._records.clear()
+        self._persist()
 
     def count(self) -> int:
         """Return how many successes are currently stored."""
@@ -118,6 +134,10 @@ class SuccessMemory:
         if record.command:
             parts.append(record.command.strip().upper())
         return " ".join(parts) if parts else record.provider
+
+    def _persist(self) -> None:
+        if self._persist_callback is not None:
+            self._persist_callback(list(self._records))
 
 
 def reset_default_success_memory() -> SuccessMemory:

@@ -30,6 +30,7 @@ SERVICE_PAUSE = "pause"
 SERVICE_RESUME = "resume"
 SERVICE_CANCEL = "cancel"
 SERVICE_MARK_SUCCESS = "mark_success"
+SERVICE_CLEAR_SUCCESS_MEMORY = "clear_success_memory"
 
 _REGISTERED_SERVICES = (
     SERVICE_START_SEARCH,
@@ -40,6 +41,7 @@ _REGISTERED_SERVICES = (
     SERVICE_RESUME,
     SERVICE_CANCEL,
     SERVICE_MARK_SUCCESS,
+    SERVICE_CLEAR_SUCCESS_MEMORY,
 )
 
 
@@ -68,6 +70,11 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     hass.services.async_register(
         DOMAIN, SERVICE_MARK_SUCCESS, partial(_async_mark_success, hass)
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CLEAR_SUCCESS_MEMORY,
+        partial(_async_clear_success_memory, hass),
     )
 
 
@@ -243,6 +250,19 @@ async def _async_mark_success(hass: HomeAssistant, call: ServiceCall) -> None:
         raise _service_error("Unable to record the successful infrared code") from err
 
     _LOGGER.info("Recorded successful infrared code from provider %s", provider)
+
+
+async def _async_clear_success_memory(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Clear remembered successes from memory and storage."""
+    coordinator = _get_coordinator(hass)
+    try:
+        coordinator.success_memory.clear()
+        await coordinator.async_publish_session()
+    except Exception as err:
+        _LOGGER.exception("Autocode Search failed")
+        raise _service_error("Unable to clear success memory") from err
+
+    _LOGGER.info("Cleared Autocode Search success memory")
 
 
 def _get_coordinator(hass: HomeAssistant) -> AutocodeSearchCoordinator:

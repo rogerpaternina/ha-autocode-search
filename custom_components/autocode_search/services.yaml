@@ -106,3 +106,7 @@ mark_success:
       description: Optional command associated with the successful code.
       selector:
         text:
+
+clear_success_memory:
+  name: Clear success memory
+  description: Remove every remembered successful infrared code from memory and storage.

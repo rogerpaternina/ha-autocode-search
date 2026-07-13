@@ -21,7 +21,7 @@ def test_setup_registers_search_services() -> None:
 
     asyncio.run(services.async_setup_services(hass))
 
-    assert hass.services.async_register.call_count == 8
+    assert hass.services.async_register.call_count == 9
     registered_services = {
         call.args[1] for call in hass.services.async_register.call_args_list
     }
@@ -34,6 +34,7 @@ def test_setup_registers_search_services() -> None:
         services.SERVICE_RESUME,
         services.SERVICE_CANCEL,
         services.SERVICE_MARK_SUCCESS,
+        services.SERVICE_CLEAR_SUCCESS_MEMORY,
     }
 
 
@@ -43,7 +44,7 @@ def test_unload_removes_search_services() -> None:
 
     asyncio.run(services.async_unload_services(hass))
 
-    assert hass.services.async_remove.call_count == 8
+    assert hass.services.async_remove.call_count == 9
 
 
 def _create_coordinator() -> AutocodeSearchCoordinator:
