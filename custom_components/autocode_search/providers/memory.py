@@ -18,9 +18,7 @@ class InMemoryCodeProvider(CodeProvider):
         if not codes:
             self._all_codes: list[IRCode] = []
         elif isinstance(codes[0], str):
-            self._all_codes = [
-                IRCode(name=code, payload=code) for code in codes
-            ]
+            self._all_codes = [IRCode(name=code, payload=code) for code in codes]
         else:
             self._all_codes = list(codes)
         self._active_codes: list[IRCode] = []
