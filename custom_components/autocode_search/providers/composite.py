@@ -7,6 +7,7 @@ import logging
 from ..models.ir_code import IRCode
 from ..models.search_filter import SearchFilter
 from .base import CodeProvider
+from .ranking import ProviderRanking, provider_display_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,15 +20,22 @@ class CompositeCodeProvider(CodeProvider):
     (same payload and protocol) are delivered only once.
     """
 
-    def __init__(self, providers: list[CodeProvider]) -> None:
+    def __init__(
+        self,
+        providers: list[CodeProvider],
+        ranking: ProviderRanking | None = None,
+    ) -> None:
         """Initialize the composite with providers in priority order."""
         self._providers = list(providers)
+        self._ranking = ranking or ProviderRanking()
         self._active_codes: list[IRCode] = []
         self._index = 0
         self._loaded = False
         self.providers_used: list[str] = []
         self.providers_completed: list[str] = []
         self.duplicates_removed: int = 0
+        self.provider_order: list[str] = []
+        self.provider_ranking_reason: str = ""
 
     async def load(self, search_filter: SearchFilter | None = None) -> None:
         """Load every provider in order and build the deduplicated stream."""
@@ -38,8 +46,15 @@ class CompositeCodeProvider(CodeProvider):
         self.duplicates_removed = 0
         seen: set[tuple[str, str | None]] = set()
 
-        for provider in self._providers:
-            provider_name = _provider_display_name(provider)
+        ranking_result = self._ranking.rank(search_filter, self._providers)
+        ordered_providers = ranking_result.providers
+        self.provider_order = [
+            provider_display_name(provider) for provider in ordered_providers
+        ]
+        self.provider_ranking_reason = ranking_result.reason
+
+        for provider in ordered_providers:
+            provider_name = provider_display_name(provider)
             _LOGGER.debug("Provider %s", provider_name)
             self.providers_used.append(provider_name)
 
@@ -97,12 +112,3 @@ class CompositeCodeProvider(CodeProvider):
         self._index = 0
         for provider in self._providers:
             provider.reset()
-
-
-def _provider_display_name(provider: CodeProvider) -> str:
-    """Return a short display name for a provider instance."""
-    name = type(provider).__name__
-    for suffix in ("CodeProvider", "Provider"):
-        if name.endswith(suffix) and len(name) > len(suffix):
-            return name[: -len(suffix)]
-    return name

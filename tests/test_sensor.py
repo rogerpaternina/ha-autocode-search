@@ -15,6 +15,8 @@ from custom_components.autocode_search.sensor import (
     AutocodeElapsedTimeSensor,
     AutocodeFilterSummarySensor,
     AutocodeProgressSensor,
+    AutocodeProviderOrderSensor,
+    AutocodeProviderRankingReasonSensor,
     AutocodeProvidersUsedSensor,
     AutocodeTotalCodesSensor,
 )
@@ -53,6 +55,8 @@ def _create_sensor_environment() -> tuple[AutocodeSearchCoordinator, SimpleNames
         "providers_used": ["SmartIR", "IRDB"],
         "providers_completed": ["SmartIR", "IRDB"],
         "duplicates_removed": 54,
+        "provider_order": ["IRDB", "SmartIR"],
+        "provider_ranking_reason": "Model specified",
     }
     return coordinator, entry
 
@@ -125,3 +129,37 @@ def test_duplicates_removed_sensor_reflects_coordinator_data() -> None:
     sensor = AutocodeDuplicatesRemovedSensor(coordinator, entry)  # type: ignore[arg-type]
 
     assert sensor.native_value == 54
+
+
+def test_provider_order_sensor_joins_provider_names_with_arrow() -> None:
+    """Provider order sensor exposes the ranked order with arrows."""
+    coordinator, entry = _create_sensor_environment()
+    sensor = AutocodeProviderOrderSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "IRDB → SmartIR"
+
+
+def test_provider_order_sensor_without_providers_shows_none() -> None:
+    """Provider order sensor falls back to None when no order is available."""
+    coordinator, entry = _create_sensor_environment()
+    coordinator.data["provider_order"] = []
+    sensor = AutocodeProviderOrderSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "None"
+
+
+def test_provider_ranking_reason_sensor_reflects_coordinator_data() -> None:
+    """Provider ranking reason sensor exposes the ranking explanation."""
+    coordinator, entry = _create_sensor_environment()
+    sensor = AutocodeProviderRankingReasonSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "Model specified"
+
+
+def test_provider_ranking_reason_sensor_without_reason_shows_none() -> None:
+    """Provider ranking reason sensor falls back to None when empty."""
+    coordinator, entry = _create_sensor_environment()
+    coordinator.data["provider_ranking_reason"] = ""
+    sensor = AutocodeProviderRankingReasonSensor(coordinator, entry)  # type: ignore[arg-type]
+
+    assert sensor.native_value == "None"

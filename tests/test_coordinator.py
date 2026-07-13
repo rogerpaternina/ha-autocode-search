@@ -17,6 +17,7 @@ from custom_components.autocode_search.models.search_session import (
 from custom_components.autocode_search.providers.composite import (
     CompositeCodeProvider,
 )
+from tests.providers.test_provider_ranking import IRDBProviderStub, SmartIRProviderStub
 from tests.test_search_engine import FakeAdapter, FakeProvider
 
 
@@ -153,6 +154,31 @@ def test_coordinator_publishes_composite_provider_statistics() -> None:
     assert published["providers_used"] == ["Fake", "Fake"]
     assert published["providers_completed"] == ["Fake", "Fake"]
     assert published["duplicates_removed"] == 1
+
+
+def test_coordinator_publishes_provider_ranking_metadata() -> None:
+    """Composite ranking metadata is copied to the session and published."""
+    coordinator = _create_coordinator()
+    composite = CompositeCodeProvider(
+        [
+            SmartIRProviderStub([IRCode(name="power", payload="p-1", protocol="NEC")]),
+            IRDBProviderStub([IRCode(name="mute", payload="p-2", protocol="NEC")]),
+        ]
+    )
+    adapter = FakeAdapter()
+    session = _create_session()
+    search_filter = SearchFilter(manufacturer="Sony", model="RM-YD103")
+
+    async def _run() -> None:
+        await coordinator.async_start_search(composite, adapter, session, search_filter)
+
+    asyncio.run(_run())
+
+    assert session.provider_order == ["IRDB", "SmartIR"]
+    assert session.provider_ranking_reason == "Model specified"
+    published = coordinator.async_set_updated_data.call_args_list[-1].args[0]
+    assert published["provider_order"] == ["IRDB", "SmartIR"]
+    assert published["provider_ranking_reason"] == "Model specified"
 
 
 def test_coordinator_finish_search_publishes_finished_state() -> None:

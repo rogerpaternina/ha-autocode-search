@@ -36,7 +36,9 @@
       "elapsed_time": { "name": "Tiempo transcurrido" },
       "filter_summary": { "name": "Resumen del filtro" },
       "providers_used": { "name": "Proveedores utilizados" },
-      "duplicates_removed": { "name": "Duplicados eliminados" }
+      "duplicates_removed": { "name": "Duplicados eliminados" },
+      "provider_order": { "name": "Orden de proveedores" },
+      "provider_ranking_reason": { "name": "Motivo del orden de proveedores" }
     },
     "binary_sensor": {
       "running": { "name": "En ejecución" }

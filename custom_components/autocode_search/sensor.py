@@ -38,6 +38,8 @@ async def async_setup_entry(
             AutocodeFilterSummarySensor(coordinator, entry),
             AutocodeProvidersUsedSensor(coordinator, entry),
             AutocodeDuplicatesRemovedSensor(coordinator, entry),
+            AutocodeProviderOrderSensor(coordinator, entry),
+            AutocodeProviderRankingReasonSensor(coordinator, entry),
         ]
     )
 
@@ -182,3 +184,28 @@ class AutocodeDuplicatesRemovedSensor(AutocodeSearchSensor):
     def native_value(self) -> int:
         """Return the number of removed duplicate codes."""
         return self.coordinator.data["duplicates_removed"]
+
+
+class AutocodeProviderOrderSensor(AutocodeSearchSensor):
+    """Expose the ranked provider consultation order."""
+
+    _attr_translation_key = "provider_order"
+    _attr_unique_id = "autocode_provider_order"
+
+    @property
+    def native_value(self) -> str:
+        """Return the provider order as an arrow-separated list."""
+        provider_order = self.coordinator.data["provider_order"]
+        return " → ".join(provider_order) if provider_order else "None"
+
+
+class AutocodeProviderRankingReasonSensor(AutocodeSearchSensor):
+    """Expose why providers were ranked in the current order."""
+
+    _attr_translation_key = "provider_ranking_reason"
+    _attr_unique_id = "autocode_provider_ranking_reason"
+
+    @property
+    def native_value(self) -> str:
+        """Return the ranking reason."""
+        return self.coordinator.data["provider_ranking_reason"] or "None"

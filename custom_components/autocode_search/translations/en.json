@@ -45,7 +45,9 @@
       "elapsed_time": { "name": "Elapsed time" },
       "filter_summary": { "name": "Filter summary" },
       "providers_used": { "name": "Providers used" },
-      "duplicates_removed": { "name": "Duplicates removed" }
+      "duplicates_removed": { "name": "Duplicates removed" },
+      "provider_order": { "name": "Provider order" },
+      "provider_ranking_reason": { "name": "Provider ranking reason" }
     },
     "binary_sensor": {
       "running": { "name": "Running" }

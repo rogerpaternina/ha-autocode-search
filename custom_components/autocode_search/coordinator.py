@@ -46,6 +46,8 @@ class AutocodeSearchData(TypedDict):
     providers_used: list[str]
     providers_completed: list[str]
     duplicates_removed: int
+    provider_order: list[str]
+    provider_ranking_reason: str
 
 
 class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
@@ -158,6 +160,8 @@ class AutocodeSearchCoordinator(DataUpdateCoordinator[AutocodeSearchData]):
             providers_used=session.providers_used,
             providers_completed=session.providers_completed,
             duplicates_removed=session.duplicates_removed,
+            provider_order=session.provider_order,
+            provider_ranking_reason=session.provider_ranking_reason,
         )
 
     async def _async_get_adapter_status(self) -> dict[str, Any]:
@@ -188,3 +192,5 @@ def _sync_provider_statistics(provider: CodeProvider, session: SearchSession) ->
         session.providers_used = list(provider.providers_used)
         session.providers_completed = list(provider.providers_completed)
         session.duplicates_removed = provider.duplicates_removed
+        session.provider_order = list(provider.provider_order)
+        session.provider_ranking_reason = provider.provider_ranking_reason

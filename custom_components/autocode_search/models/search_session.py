@@ -52,6 +52,8 @@ class SearchSession:
     providers_used: list[str] = field(default_factory=list)
     providers_completed: list[str] = field(default_factory=list)
     duplicates_removed: int = 0
+    provider_order: list[str] = field(default_factory=list)
+    provider_ranking_reason: str = ""
 
     def __post_init__(self) -> None:
         """Validate the immutable bounds of the session progress."""
