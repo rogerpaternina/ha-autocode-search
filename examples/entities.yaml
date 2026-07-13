@@ -1,0 +1,67 @@
+# AutoCode Search — Helper entities
+#
+# Copy the sections you need into configuration.yaml or a package:
+#
+#   homeassistant:
+#     packages:
+#       autocode_search_helpers: !include_dir_merge_named examples/
+#
+# Or paste individual blocks into your existing helpers configuration.
+#
+# These helpers make it easy to build automations and scripts that call
+# autocode_search.start_search with consistent filter values.
+
+input_select:
+  autocode_manufacturer:
+    name: AutoCode Manufacturer
+    icon: mdi:factory
+    options:
+      - LG
+      - Samsung
+      - Sony
+      - Panasonic
+      - Philips
+      - TCL
+      - Hisense
+      - Sharp
+      - Daikin
+      - Midea
+      - Carrier
+      - Gree
+      - Universal
+      - Other
+
+  autocode_device_type:
+    name: AutoCode Device Type
+    icon: mdi:television
+    options:
+      - tv
+      - air_conditioner
+      - fan
+      - av_receiver
+      - projector
+      - set_top_box
+      - audio_system
+      - other
+
+  autocode_provider:
+    name: AutoCode Preferred Provider
+    icon: mdi:database-search
+    options:
+      - auto
+      - smartir
+      - irdb
+      - lirc
+
+input_text:
+  autocode_model:
+    name: AutoCode Model
+    icon: mdi:tag-text
+    max: 100
+    initial: ""
+
+  autocode_command:
+    name: AutoCode Command
+    icon: mdi:remote
+    max: 100
+    initial: POWER

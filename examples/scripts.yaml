@@ -1,0 +1,73 @@
+# AutoCode Search — Example scripts
+#
+# Include from configuration.yaml:
+#
+#   script: !include examples/scripts.yaml
+#
+# Replace remote.living_room with the remote entity configured in the
+# AutoCode Search integration.
+#
+# Scripts read filter values from the helper entities defined in
+# examples/entities.yaml.
+
+search_power:
+  alias: "AutoCode: Buscar POWER"
+  icon: mdi:power
+  sequence:
+    - action: autocode_search.start_search
+      data:
+        entity_id: remote.living_room
+        manufacturer: "{{ states('input_select.autocode_manufacturer') }}"
+        model: "{{ states('input_text.autocode_model') }}"
+        device_type: "{{ states('input_select.autocode_device_type') }}"
+        command: POWER
+
+search_volume_up:
+  alias: "AutoCode: Buscar VOLUME UP"
+  icon: mdi:volume-plus
+  sequence:
+    - action: autocode_search.start_search
+      data:
+        entity_id: remote.living_room
+        manufacturer: "{{ states('input_select.autocode_manufacturer') }}"
+        model: "{{ states('input_text.autocode_model') }}"
+        device_type: "{{ states('input_select.autocode_device_type') }}"
+        command: VOLUME UP
+
+search_mute:
+  alias: "AutoCode: Buscar MUTE"
+  icon: mdi:volume-mute
+  sequence:
+    - action: autocode_search.start_search
+      data:
+        entity_id: remote.living_room
+        manufacturer: "{{ states('input_select.autocode_manufacturer') }}"
+        model: "{{ states('input_text.autocode_model') }}"
+        device_type: "{{ states('input_select.autocode_device_type') }}"
+        command: MUTE
+
+search_input:
+  alias: "AutoCode: Buscar INPUT"
+  icon: mdi:hdmi-port
+  sequence:
+    - action: autocode_search.start_search
+      data:
+        entity_id: remote.living_room
+        manufacturer: "{{ states('input_select.autocode_manufacturer') }}"
+        model: "{{ states('input_text.autocode_model') }}"
+        device_type: "{{ states('input_select.autocode_device_type') }}"
+        command: INPUT
+
+search_start:
+  alias: "AutoCode: Iniciar búsqueda"
+  icon: mdi:play
+  description: >-
+    Inicia una búsqueda usando los helpers de examples/entities.yaml.
+  sequence:
+    - action: autocode_search.start_search
+      data:
+        entity_id: remote.living_room
+        manufacturer: "{{ states('input_select.autocode_manufacturer') }}"
+        model: "{{ states('input_text.autocode_model') }}"
+        device_type: "{{ states('input_select.autocode_device_type') }}"
+        command: "{{ states('input_text.autocode_command') }}"

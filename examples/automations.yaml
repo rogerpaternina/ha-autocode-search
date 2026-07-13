@@ -1,0 +1,83 @@
+# AutoCode Search — Example automations
+#
+# Include from configuration.yaml:
+#
+#   automation: !include examples/automations.yaml
+#
+# Replace placeholder entities (remote, notify, physical button) with your
+# own entity IDs before enabling these automations.
+
+- id: autocode_auto_confirm_physical_button
+  alias: "AutoCode: Confirmar éxito con botón físico"
+  description: >-
+    Cuando el usuario pulsa un botón físico mientras la búsqueda espera
+    confirmación, registra el código como exitoso.
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_confirm_button
+      from: "off"
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.autocode_search_waiting_confirmation
+      state: "on"
+  action:
+    - action: autocode_search.confirm_success
+
+- id: autocode_auto_cancel_timeout
+  alias: "AutoCode: Rechazar resultado tras 15 minutos"
+  description: >-
+    Si el usuario no responde en 15 minutos mientras se espera confirmación,
+    descarta el resultado pendiente.
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.autocode_search_waiting_confirmation
+      to: "on"
+  action:
+    - delay:
+        minutes: 15
+    - condition: state
+      entity_id: binary_sensor.autocode_search_waiting_confirmation
+      state: "on"
+    - action: autocode_search.reject_result
+
+- id: autocode_search_finished_notification
+  alias: "AutoCode: Notificación al terminar búsqueda"
+  description: >-
+    Envía una notificación móvil cuando la búsqueda termina y espera
+    confirmación del usuario.
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.autocode_search_waiting_confirmation
+      to: "on"
+  action:
+    - action: notify.mobile_app_your_phone
+      data:
+        title: AutoCode Search
+        message: >-
+          La búsqueda ha terminado. Revisa si el dispositivo respondió y
+          confirma o rechaza el resultado desde el panel.
+        data:
+          tag: autocode_search
+          group: autocode_search
+
+- id: autocode_quick_start_lg_tv
+  alias: "AutoCode: Inicio rápido LG TV POWER"
+  description: >-
+    Ejemplo de inicio rápido con fabricante y modelo conocidos.
+  mode: single
+  trigger:
+    - platform: event
+      event_type: autocode_quick_start
+  action:
+    - action: autocode_search.start_search
+      data:
+        entity_id: remote.living_room
+        manufacturer: LG
+        model: OLED55
+        device_type: tv
+        brand: lg
+        command: POWER

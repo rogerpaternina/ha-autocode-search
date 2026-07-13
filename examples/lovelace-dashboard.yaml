@@ -1,0 +1,209 @@
+# AutoCode Search — Lovelace dashboard
+#
+# Import this dashboard from the Home Assistant UI:
+#   Settings → Dashboards → Add dashboard → Import from YAML
+#
+# Or add as a panel in configuration.yaml:
+#
+#   lovelace:
+#     mode: yaml
+#     dashboards:
+#       autocode-search:
+#         mode: yaml
+#         title: AutoCode Search
+#         filename: examples/lovelace-dashboard.yaml
+#
+# Entity IDs follow the default naming convention for the integration device
+# "Autocode Search". Verify yours under Settings → Devices & services →
+# Autocode Search → Entities.
+#
+# Replace remote.living_room with your configured remote entity.
+
+title: AutoCode Search
+views:
+  - title: Búsqueda IR
+    path: autocode-search
+    icon: mdi:remote
+    cards:
+      - type: markdown
+        content: |
+          ## AutoCode Search
+          Panel de control para búsqueda automática de códigos infrarrojos.
+
+      - type: markdown
+        content: >
+          {% if is_state('binary_sensor.autocode_search_waiting_confirmation',
+          'on') %}
+            **Estado:** Esperando confirmación
+          {% elif is_state('binary_sensor.autocode_search_running', 'on') %}
+            **Estado:** En ejecución
+          {% elif (states('sensor.autocode_search_codes_tested') | int(0) > 0)
+            and (states('sensor.autocode_search_progress') | float(0) < 100) %}
+            **Estado:** Pausada
+          {% else %}
+            **Estado:** Inactiva
+          {% endif %}
+
+      - type: glance
+        title: Estado
+        show_name: true
+        columns: 2
+        entities:
+          - entity: sensor.autocode_search_progress
+            name: Progreso
+          - entity: sensor.autocode_search_elapsed_time
+            name: Tiempo transcurrido
+          - entity: sensor.autocode_search_current_command
+            name: Código actual
+          - entity: sensor.autocode_search_current_manufacturer
+            name: Fabricante
+          - entity: sensor.autocode_search_current_model
+            name: Modelo
+          - entity: sensor.autocode_search_last_provider
+            name: Proveedor actual
+          - entity: sensor.autocode_search_provider_order
+            name: Orden de proveedores
+          - entity: sensor.autocode_search_provider_ranking_reason
+            name: Motivo del ranking
+
+      - type: glance
+        title: Estadísticas
+        show_name: true
+        columns: 2
+        entities:
+          - entity: sensor.autocode_search_success_records
+            name: Éxitos registrados
+          - entity: sensor.autocode_search_last_success
+            name: Último éxito
+          - entity: sensor.autocode_search_duplicates_removed
+            name: Duplicados eliminados
+          - entity: sensor.autocode_search_providers_used
+            name: Proveedores utilizados
+
+      - type: entities
+        title: Filtros de búsqueda
+        entities:
+          - entity: input_select.autocode_manufacturer
+          - entity: input_text.autocode_model
+          - entity: input_select.autocode_device_type
+          - entity: input_text.autocode_command
+          - entity: input_select.autocode_provider
+
+      - type: button
+        name: Iniciar búsqueda
+        icon: mdi:play
+        tap_action:
+          action: call-service
+          service: script.search_start
+        visibility:
+          - condition: state
+            entity: binary_sensor.autocode_search_running
+            state: "off"
+          - condition: state
+            entity: binary_sensor.autocode_search_waiting_confirmation
+            state: "off"
+          - condition: or
+            conditions:
+              - condition: numeric_state
+                entity: sensor.autocode_search_codes_tested
+                below: 1
+              - condition: numeric_state
+                entity: sensor.autocode_search_progress
+                above: 99.9
+
+      - type: vertical-stack
+        visibility:
+          - condition: state
+            entity: binary_sensor.autocode_search_running
+            state: "on"
+        cards:
+          - type: gauge
+            entity: sensor.autocode_search_progress
+            name: Progreso de búsqueda
+            min: 0
+            max: 100
+            severity:
+              green: 0
+              yellow: 50
+              red: 90
+          - type: horizontal-stack
+            cards:
+              - type: button
+                name: Pausar
+                icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: autocode_search.pause
+              - type: button
+                name: Cancelar
+                icon: mdi:stop
+                tap_action:
+                  action: call-service
+                  service: autocode_search.cancel
+
+      - type: button
+        name: Reanudar
+        icon: mdi:play
+        tap_action:
+          action: call-service
+          service: autocode_search.resume
+        visibility:
+          - condition: state
+            entity: binary_sensor.autocode_search_running
+            state: "off"
+          - condition: state
+            entity: binary_sensor.autocode_search_waiting_confirmation
+            state: "off"
+          - condition: numeric_state
+            entity: sensor.autocode_search_codes_tested
+            above: 0
+          - condition: numeric_state
+            entity: sensor.autocode_search_progress
+            below: 100
+
+      - type: horizontal-stack
+        visibility:
+          - condition: state
+            entity: binary_sensor.autocode_search_waiting_confirmation
+            state: "on"
+        cards:
+          - type: button
+            name: "✓ Funcionó"
+            icon: mdi:check-circle
+            tap_action:
+              action: call-service
+              service: autocode_search.confirm_success
+          - type: button
+            name: "✗ No funcionó"
+            icon: mdi:close-circle
+            tap_action:
+              action: call-service
+              service: autocode_search.reject_result
+
+      - type: horizontal-stack
+        title: Comandos rápidos
+        cards:
+          - type: button
+            name: POWER
+            icon: mdi:power
+            tap_action:
+              action: call-service
+              service: script.search_power
+          - type: button
+            name: VOL+
+            icon: mdi:volume-plus
+            tap_action:
+              action: call-service
+              service: script.search_volume_up
+          - type: button
+            name: MUTE
+            icon: mdi:volume-mute
+            tap_action:
+              action: call-service
+              service: script.search_mute
+          - type: button
+            name: INPUT
+            icon: mdi:hdmi-port
+            tap_action:
+              action: call-service
+              service: script.search_input
