@@ -1,16 +1,13 @@
-"""Infrared code provider interfaces and implementations."""
-
-from .base import CodeProvider
-from .irdb import IRDBProvider
-from .lirc import LIRCProvider
+from .factory import ProviderFactory
 from .memory import InMemoryCodeProvider
 from .smartir import SmartIRProvider
-from .factory import ProviderFactory
+from .irdb import IRDBProvider
+from .lirc import LIRCProvider
 
 __all__ = [
-    "CodeProvider",
-    "IRDBProvider",
+    "ProviderFactory",
     "InMemoryCodeProvider",
-    "LIRCProvider",
     "SmartIRProvider",
+    "IRDBProvider",
+    "LIRCProvider",
 ]
